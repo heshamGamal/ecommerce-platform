@@ -9,6 +9,7 @@ use App\Modules\Catalog\Domain\Exceptions\VariantNotFoundException;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException as DomainAuthenticationException;
 use App\Modules\Auth\Domain\Exceptions\AuthorizationException as DomainAuthorizationException;
 use App\Modules\Customer\Domain\Exceptions\CustomerNotFoundException;
+use App\Modules\Customer\Domain\Exceptions\CustomerFeatureNotFoundException;
 use App\Modules\Settings\Domain\Exceptions\SettingsNotFoundException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -25,6 +26,6 @@ return Application::configure(basePath: dirname(__DIR__))
   $exceptions->render(function(DomainAuthenticationException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],401);});
   $exceptions->render(function(DomainAuthorizationException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],403);});
   $exceptions->render(function(BusinessRuleException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],409);});
-  $exceptions->render(function(ProductNotFoundException|VariantNotFoundException|AttributeNotFoundException|AttributeValueNotFoundException|BrandNotFoundException|CategoryNotFoundException|SettingsNotFoundException|CustomerNotFoundException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],404);});
+  $exceptions->render(function(ProductNotFoundException|VariantNotFoundException|AttributeNotFoundException|AttributeValueNotFoundException|BrandNotFoundException|CategoryNotFoundException|SettingsNotFoundException|CustomerNotFoundException|CustomerFeatureNotFoundException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],404);});
   $exceptions->render(function(HttpExceptionInterface $e,Request $r){if($r->is('api/*')&&$e->getStatusCode()===403)return response()->json(['message'=>'Forbidden.'],403);});
  })->create();

@@ -56,6 +56,15 @@ class RbacSeeder extends Seeder
             ['name' => 'Update Customers', 'slug' => 'customers.update', 'group' => 'customers'],
             ['name' => 'View Own Customer Profile', 'slug' => 'customer.profile.view', 'group' => 'customer-profile'],
             ['name' => 'Update Own Customer Profile', 'slug' => 'customer.profile.update', 'group' => 'customer-profile'],
+            ['name' => 'View Customer Addresses', 'slug' => 'customer.addresses.view', 'group' => 'customer-profile'],
+            ['name' => 'Manage Customer Addresses', 'slug' => 'customer.addresses.manage', 'group' => 'customer-profile'],
+            ['name' => 'View Customer Orders', 'slug' => 'customer.orders.view', 'group' => 'customer-profile'],
+            ['name' => 'View Customer Cart', 'slug' => 'customer.cart.view', 'group' => 'customer-profile'],
+            ['name' => 'Manage Customer Cart', 'slug' => 'customer.cart.manage', 'group' => 'customer-profile'],
+            ['name' => 'View Customer Wishlist', 'slug' => 'customer.wishlist.view', 'group' => 'customer-profile'],
+            ['name' => 'Manage Customer Wishlist', 'slug' => 'customer.wishlist.manage', 'group' => 'customer-profile'],
+            ['name' => 'Manage Customer Preferences', 'slug' => 'customer.preferences.manage', 'group' => 'customer-profile'],
+            ['name' => 'View Customer Notifications', 'slug' => 'customer.notifications.view', 'group' => 'customer-profile'],
 
             // Assistants
             ['name' => 'View Assistants', 'slug' => 'assistants.view', 'group' => 'assistants'],
@@ -119,8 +128,9 @@ class RbacSeeder extends Seeder
 
         $allPermissions = Permission::query()->get();
         $customerProfilePermissions = $allPermissions->whereIn('slug', [
-            'customer.profile.view',
-            'customer.profile.update',
+            'customer.profile.view', 'customer.profile.update', 'customer.addresses.view', 'customer.addresses.manage',
+            'customer.orders.view', 'customer.cart.view', 'customer.cart.manage', 'customer.wishlist.view', 'customer.wishlist.manage',
+            'customer.preferences.manage', 'customer.notifications.view',
         ]);
 
         $roles = [

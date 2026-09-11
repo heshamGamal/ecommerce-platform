@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -50,6 +52,36 @@ class User extends Authenticatable
             'permission_id'
         )->withPivot('allowed')
             ->withTimestamps();
+    }
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(CustomerAddress::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(CustomerOrder::class);
+    }
+
+    public function cart(): HasOne
+    {
+        return $this->hasOne(CustomerCart::class);
+    }
+
+    public function wishlist(): HasMany
+    {
+        return $this->hasMany(CustomerWishlist::class);
+    }
+
+    public function preferences(): HasOne
+    {
+        return $this->hasOne(CustomerPreference::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(CustomerNotification::class);
     }
 
     /**
