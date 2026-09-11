@@ -18,6 +18,7 @@ final class EloquentPermissionRepository implements PermissionRepositoryInterfac
         }
 
         return $user->roles()
+            ->where('is_active', true)
             ->whereHas('permissions', static function ($query) use ($permission): void {
                 $query->where('slug', $permission);
             })

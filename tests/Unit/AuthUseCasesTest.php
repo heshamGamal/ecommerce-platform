@@ -29,6 +29,15 @@ class AuthUseCasesTest extends TestCase
         self::assertSame($user, (new AuthenticateUser($authentication))->execute());
     }
 
+    public function test_authentication_use_case_rejects_missing_user(): void
+    {
+        $authentication = $this->createMock(AuthenticationServiceInterface::class);
+        $authentication->expects(self::once())->method('user')->willReturn(null);
+
+        $this->expectException(AuthenticationException::class);
+        (new AuthenticateUser($authentication))->execute();
+    }
+
     public function test_authorization_delegates_to_domain_contract(): void
     {
         $authorization = $this->createMock(AuthorizationServiceInterface::class);

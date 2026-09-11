@@ -22,6 +22,16 @@ class RbacSeeder extends Seeder
             ['name' => 'Create Products', 'slug' => 'products.create', 'group' => 'products'],
             ['name' => 'Update Products', 'slug' => 'products.update', 'group' => 'products'],
             ['name' => 'Delete Products', 'slug' => 'products.delete', 'group' => 'products'],
+            ['name' => 'View Product Variants', 'slug' => 'products.variants.view', 'group' => 'products'],
+            ['name' => 'Create Product Variants', 'slug' => 'products.variants.create', 'group' => 'products'],
+            ['name' => 'Update Product Variants', 'slug' => 'products.variants.update', 'group' => 'products'],
+            ['name' => 'Delete Product Variants', 'slug' => 'products.variants.delete', 'group' => 'products'],
+
+            // Attributes
+            ['name' => 'View Attributes', 'slug' => 'attributes.view', 'group' => 'catalog'],
+            ['name' => 'Create Attributes', 'slug' => 'attributes.create', 'group' => 'catalog'],
+            ['name' => 'Update Attributes', 'slug' => 'attributes.update', 'group' => 'catalog'],
+            ['name' => 'Delete Attributes', 'slug' => 'attributes.delete', 'group' => 'catalog'],
 
             // Categories
             ['name' => 'View Categories', 'slug' => 'categories.view', 'group' => 'catalog'],
@@ -134,10 +144,25 @@ class RbacSeeder extends Seeder
             'customer.preferences.manage', 'customer.notifications.view',
         ]);
         $productManagerPermissions = $allPermissions->whereIn('slug', [
-            'products.create',
+            'products.view', 'products.create', 'products.update', 'products.delete',
+            'products.variants.view', 'products.variants.create', 'products.variants.update', 'products.variants.delete',
+            'attributes.view', 'attributes.create', 'attributes.update', 'attributes.delete',
+            'brands.view', 'brands.create', 'brands.update', 'brands.delete',
+            'categories.view', 'categories.create', 'categories.update', 'categories.delete',
         ]);
         $orderManagerPermissions = $allPermissions->whereIn('slug', [
-            'orders.manage',
+            'orders.view', 'orders.manage', 'orders.verify', 'orders.confirm', 'orders.edit', 'orders.cancel',
+        ]);
+        $managerPermissions = $allPermissions->whereIn('slug', [
+            'products.view', 'products.create', 'products.update', 'products.delete',
+            'products.variants.view', 'products.variants.create', 'products.variants.update', 'products.variants.delete',
+            'attributes.view', 'attributes.create', 'attributes.update', 'attributes.delete',
+            'brands.view', 'brands.create', 'brands.update', 'brands.delete',
+            'categories.view', 'categories.create', 'categories.update', 'categories.delete',
+            'orders.view', 'orders.manage', 'orders.verify', 'orders.confirm', 'orders.edit', 'orders.cancel',
+        ]);
+        $supportAgentPermissions = $allPermissions->whereIn('slug', [
+            'customers.view', 'customer.orders.view', 'customer.addresses.view', 'customer.notifications.view', 'orders.view',
         ]);
 
         $roles = [
@@ -180,6 +205,18 @@ class RbacSeeder extends Seeder
                 'is_system' => true,
                 'permissions' => $orderManagerPermissions,
             ],
+            'manager' => [
+                'name' => 'Manager',
+                'description' => 'Manages catalog and operational orders without sensitive administration.',
+                'is_system' => true,
+                'permissions' => $managerPermissions,
+            ],
+            'support_agent' => [
+                'name' => 'Support Agent',
+                'description' => 'Can view customer and order information without mutation access.',
+                'is_system' => true,
+                'permissions' => $supportAgentPermissions,
+            ],
         ];
 
         foreach ($roles as $slug => $roleData) {
@@ -189,6 +226,7 @@ class RbacSeeder extends Seeder
                     'name' => $roleData['name'],
                     'description' => $roleData['description'],
                     'is_system' => $roleData['is_system'],
+                    'is_active' => true,
                 ]
             );
 

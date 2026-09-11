@@ -15,6 +15,7 @@ class Role extends Model
         'slug',
         'description',
         'is_system',
+        'is_active',
     ];
 
     /**
@@ -58,6 +59,7 @@ class Role extends Model
     {
         return [
             'is_system' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 }

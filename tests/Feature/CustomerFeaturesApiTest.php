@@ -13,6 +13,23 @@ final class CustomerFeaturesApiTest extends TestCase {
   $this->actingAs($this->customer)->putJson('/api/customer/preferences',['data'=>['locale'=>'ar','marketing'=>false]])->assertOk();$this->actingAs($this->customer)->getJson('/api/customer/preferences')->assertOk()->assertJsonPath('data.data.locale','ar');
   CustomerNotification::query()->create(['user_id'=>$this->customer->id,'type'=>'order','title'=>'Order','body'=>'Ready']);$this->actingAs($this->customer)->getJson('/api/customer/notifications')->assertOk()->assertJsonCount(1,'data');
  }
+ public function test_customer_cannot_read_modify_or_delete_another_customers_data():void{
+  $other=User::factory()->create();
+  $otherAddress=
+   \App\Models\CustomerAddress::query()->create(['user_id'=>$other->id,'recipient_name'=>'Other','phone'=>'012','address_line1'=>'Other Street','city'=>'Cairo','country'=>'EG','is_default'=>true]);
+  \App\Models\CustomerCart::query()->create(['user_id'=>$other->id]);
+  \App\Models\CustomerWishlist::query()->create(['user_id'=>$other->id,'product_id'=>$this->product->id]);
+  \App\Models\CustomerPreference::query()->create(['user_id'=>$other->id,'data'=>['secret'=>true]]);
+  $notification=CustomerNotification::query()->create(['user_id'=>$other->id,'type'=>'private','title'=>'Private']);
+  $this->actingAs($this->customer)->getJson('/api/customer/addresses/default')->assertNotFound();
+  $this->actingAs($this->customer)->putJson("/api/customer/addresses/{$otherAddress->id}",['recipient_name'=>'Hijacked','phone'=>'013','address_line1'=>'No','city'=>'Cairo','country'=>'EG'])->assertNotFound();
+  $this->actingAs($this->customer)->deleteJson("/api/customer/addresses/{$otherAddress->id}")->assertNotFound();
+  $this->actingAs($this->customer)->getJson('/api/customer/cart')->assertOk()->assertJsonMissing(['user_id'=>$other->id]);
+  $this->actingAs($this->customer)->getJson('/api/customer/wishlist')->assertOk()->assertJsonCount(0,'data');
+  $this->actingAs($this->customer)->getJson('/api/customer/preferences')->assertOk()->assertJsonMissing(['secret'=>true]);
+  $this->actingAs($this->customer)->patchJson("/api/customer/notifications/{$notification->id}/read")->assertNotFound();
+ }
+
  public function test_customer_can_list_only_own_orders_and_guests_are_rejected():void{
   $this->getJson('/api/customer/orders')->assertUnauthorized();
   CustomerOrder::query()->create(['user_id'=>$this->customer->id,'status'=>'pending','total_amount'=>100]);$other=User::factory()->create();CustomerOrder::query()->create(['user_id'=>$other->id,'status'=>'pending','total_amount'=>200]);
