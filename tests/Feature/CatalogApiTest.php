@@ -26,7 +26,7 @@ class CatalogApiTest extends TestCase
  }
  public function test_permissions_are_required():void
  {
-  $user=User::factory()->create();$this->actingAs($user)->getJson('/api/products')->assertForbidden();
   $this->postJson('/api/products',[])->assertUnauthorized();
+  $user=User::factory()->create();$this->actingAs($user)->getJson('/api/products')->assertForbidden();
  }
 }

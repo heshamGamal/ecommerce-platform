@@ -4,11 +4,19 @@ namespace App\Modules\Auth\Infrastructure\Authentication;
 
 use App\Models\User;
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
+use App\Modules\Auth\Domain\Contracts\PasswordServiceInterface;
+use App\Modules\Auth\Domain\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Support\Facades\Auth;
 
 final class LaravelSessionAuthenticationService implements AuthenticationServiceInterface
 {
+    public function __construct(
+        private readonly UserRepositoryInterface $users,
+        private readonly PasswordServiceInterface $passwords,
+    ) {
+    }
+
     private function guard(): StatefulGuard
     {
         /** @var StatefulGuard $guard */
@@ -19,22 +27,17 @@ final class LaravelSessionAuthenticationService implements AuthenticationService
 
     public function attempt(string $identifier, string $password, bool $remember = false): ?User
     {
-        if (!$this->guard()->attempt([
-            'email' => $identifier,
-            'password' => $password,
-            'status' => 'active',
-        ], $remember) && !$this->guard()->attempt([
-            'phone' => $identifier,
-            'password' => $password,
-            'status' => 'active',
-        ], $remember)) {
+        $user = $this->users->findByIdentifier($identifier);
+
+        if ($user === null
+            || !$user->isActive()
+            || !$this->passwords->check($password, (string) $user->getAuthPassword())) {
             return null;
         }
 
-        /** @var User|null $user */
-        $user = $this->guard()->user();
+        $this->guard()->login($user, $remember);
 
-        return $user;
+        return $this->guard()->user();
     }
 
     public function login(User $user, bool $remember = false): void
