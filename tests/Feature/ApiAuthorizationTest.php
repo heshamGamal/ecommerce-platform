@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,6 +62,20 @@ class ApiAuthorizationTest extends TestCase
         }
     }
 
+    public function test_authenticated_user_with_permission_is_not_rejected_by_authorization(): void
+    {
+        $admin = Role::query()->where('slug', 'admin')->firstOrFail();
+        $this->user->roles()->attach($admin);
+        $this->actingAs($this->user);
+
+        foreach ($this->endpointRequests() as [$method, $uri, $payload]) {
+            $response = $this->request($method, $uri, $payload);
+
+            self::assertNotSame(401, $response->status(), $method.' '.$uri.' was not authenticated.');
+            self::assertNotSame(403, $response->status(), $method.' '.$uri.' was not authorized.');
+        }
+    }
+
     /** @return array<int, array{string, string, array<string, mixed>}> */
     private function endpointRequests(): array
     {
@@ -106,6 +121,14 @@ class ApiAuthorizationTest extends TestCase
             ['GET', '/api/settings/groups/store', []],
             ['GET', '/api/settings/store.name', []],
             ['PUT', '/api/settings/store.name', []],
+            ['GET', '/api/customer/profile', []],
+            ['GET', '/api/customer/addresses', []],
+            ['GET', '/api/customer/addresses/default', []],
+            ['GET', '/api/customer/orders', []],
+            ['GET', '/api/customer/cart', []],
+            ['GET', '/api/customer/wishlist', []],
+            ['GET', '/api/customer/preferences', []],
+            ['GET', '/api/customer/notifications', []],
         ];
     }
 
