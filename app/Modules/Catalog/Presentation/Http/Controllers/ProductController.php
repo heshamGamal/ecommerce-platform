@@ -1,5 +1,6 @@
 <?php
 namespace App\Modules\Catalog\Presentation\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 use App\Modules\Catalog\Application\DTOs\ProductData;
 use App\Modules\Catalog\Application\DTOs\ProductVariantData;
@@ -7,26 +8,72 @@ use App\Modules\Catalog\Application\UseCases\Products\CreateProduct;
 use App\Modules\Catalog\Application\UseCases\Products\CreateProductVariant;
 use App\Modules\Catalog\Application\UseCases\Products\DeleteProduct;
 use App\Modules\Catalog\Application\UseCases\Products\DeleteProductVariant;
+use App\Modules\Catalog\Application\UseCases\Products\GetProduct;
+use App\Modules\Catalog\Application\UseCases\Products\GetProductVariant;
+use App\Modules\Catalog\Application\UseCases\Products\ListProducts;
+use App\Modules\Catalog\Application\UseCases\Products\ListProductVariants;
 use App\Modules\Catalog\Application\UseCases\Products\UpdateProduct;
 use App\Modules\Catalog\Application\UseCases\Products\UpdateProductVariant;
-use App\Modules\Catalog\Domain\Contracts\ProductRepositoryInterface;
+use App\Modules\Catalog\Presentation\Http\Requests\CatalogActionRequest;
 use App\Modules\Catalog\Presentation\Http\Requests\StoreProductRequest;
 use App\Modules\Catalog\Presentation\Http\Requests\StoreProductVariantRequest;
 use App\Modules\Catalog\Presentation\Http\Requests\UpdateProductRequest;
 use App\Modules\Catalog\Presentation\Http\Requests\UpdateProductVariantRequest;
-use Illuminate\Http\JsonResponse;use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+
 class ProductController extends Controller
 {
- public function __construct(private readonly ProductRepositoryInterface $products){}
- public function index(Request $r):JsonResponse{$this->allow($r,'products.view');return response()->json(['data'=>$this->products->all()]);}
- public function store(StoreProductRequest $r,CreateProduct $u):JsonResponse{return response()->json(['data'=>$u->execute(ProductData::fromArray($r->validated()))],201);}
- public function show(Request $r,int $product):JsonResponse{$this->allow($r,'products.view');return response()->json(['data'=>$this->products->findOrFail($product)]);}
- public function update(UpdateProductRequest $r,int $product,UpdateProduct $u):JsonResponse{return response()->json(['data'=>$u->execute($product,ProductData::fromArray($r->validated()))]);}
- public function destroy(Request $r,int $product,DeleteProduct $u):JsonResponse{$this->allow($r,'products.delete');$u->execute($product);return response()->json(null,204);}
- public function variants(Request $r,int $product):JsonResponse{$this->allow($r,'products.view');$p=$this->products->findOrFail($product);return response()->json(['data'=>$this->products->variants($p)]);}
- public function storeVariant(StoreProductVariantRequest $r,int $product,CreateProductVariant $u):JsonResponse{return response()->json(['data'=>$u->execute($product,ProductVariantData::fromArray($r->validated()))],201);}
- public function showVariant(Request $r,int $product,int $variant):JsonResponse{$this->allow($r,'products.view');$p=$this->products->findOrFail($product);return response()->json(['data'=>$this->products->findVariantOrFail($p,$variant)]);}
- public function updateVariant(UpdateProductVariantRequest $r,int $product,int $variant,UpdateProductVariant $u):JsonResponse{return response()->json(['data'=>$u->execute($product,$variant,ProductVariantData::fromArray($r->validated()))]);}
- public function destroyVariant(Request $r,int $product,int $variant,DeleteProductVariant $u):JsonResponse{$this->allow($r,'products.delete');$u->execute($product,$variant);return response()->json(null,204);}
- private function allow(Request $r,string $permission):void{abort_unless($r->user()?->hasPermission($permission),403);}
+    public function index(CatalogActionRequest $request, ListProducts $useCase): JsonResponse
+    {
+        return response()->json(['data' => $useCase->execute()]);
+    }
+
+    public function store(StoreProductRequest $request, CreateProduct $useCase): JsonResponse
+    {
+        return response()->json(['data' => $useCase->execute(ProductData::fromArray($request->validated()))], 201);
+    }
+
+    public function show(CatalogActionRequest $request, int $product, GetProduct $useCase): JsonResponse
+    {
+        return response()->json(['data' => $useCase->execute($product)]);
+    }
+
+    public function update(UpdateProductRequest $request, int $product, UpdateProduct $useCase): JsonResponse
+    {
+        return response()->json(['data' => $useCase->execute($product, ProductData::fromArray($request->validated()))]);
+    }
+
+    public function destroy(CatalogActionRequest $request, int $product, DeleteProduct $useCase): JsonResponse
+    {
+        $useCase->execute($product);
+
+        return response()->json(null, 204);
+    }
+
+    public function variants(CatalogActionRequest $request, int $product, ListProductVariants $useCase): JsonResponse
+    {
+        return response()->json(['data' => $useCase->execute($product)]);
+    }
+
+    public function storeVariant(StoreProductVariantRequest $request, int $product, CreateProductVariant $useCase): JsonResponse
+    {
+        return response()->json(['data' => $useCase->execute($product, ProductVariantData::fromArray($request->validated()))], 201);
+    }
+
+    public function showVariant(CatalogActionRequest $request, int $product, int $variant, GetProductVariant $useCase): JsonResponse
+    {
+        return response()->json(['data' => $useCase->execute($product, $variant)]);
+    }
+
+    public function updateVariant(UpdateProductVariantRequest $request, int $product, int $variant, UpdateProductVariant $useCase): JsonResponse
+    {
+        return response()->json(['data' => $useCase->execute($product, $variant, ProductVariantData::fromArray($request->validated()))]);
+    }
+
+    public function destroyVariant(CatalogActionRequest $request, int $product, int $variant, DeleteProductVariant $useCase): JsonResponse
+    {
+        $useCase->execute($product, $variant);
+
+        return response()->json(null, 204);
+    }
 }

@@ -2,15 +2,14 @@
 namespace App\Modules\Settings\Application\UseCases;
 
 use App\Modules\Settings\Domain\Contracts\SettingsRepositoryInterface;
+use Illuminate\Support\Collection;
 
-final class GetSetting
+final class ListSettings
 {
     public function __construct(private readonly SettingsRepositoryInterface $settings) {}
 
-    public function execute(string $key, mixed $default = null): mixed
+    public function execute(): Collection
     {
-        $setting = $this->settings->findByKey($key);
-
-        return $setting?->getTypedValue() ?? $default;
+        return $this->settings->getAll();
     }
 }
