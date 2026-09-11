@@ -7,6 +7,7 @@ use App\Modules\Auth\Application\DTOs\ChangePasswordData;
 use App\Modules\Auth\Application\DTOs\RegisterUserData;
 use App\Modules\Auth\Application\UseCases\ChangePassword;
 use App\Modules\Auth\Application\UseCases\AuthorizeUser;
+use App\Modules\Auth\Application\UseCases\AuthenticateUser;
 use App\Modules\Auth\Application\UseCases\LoginUser;
 use App\Modules\Auth\Application\UseCases\LogoutUser;
 use App\Modules\Auth\Application\UseCases\RegisterUser;
@@ -19,12 +20,22 @@ use PHPUnit\Framework\TestCase;
 
 class AuthUseCasesTest extends TestCase
 {
+    public function test_authentication_use_case_returns_current_user(): void
+    {
+        $user = new User(['name' => 'Authenticated']);
+        $authentication = $this->createMock(AuthenticationServiceInterface::class);
+        $authentication->expects(self::once())->method('user')->willReturn($user);
+
+        self::assertSame($user, (new AuthenticateUser($authentication))->execute());
+    }
+
     public function test_authorization_delegates_to_domain_contract(): void
     {
         $authorization = $this->createMock(AuthorizationServiceInterface::class);
-        $authorization->expects(self::once())->method('allows')->with('products.create')->willReturn(true);
+        $user = new User(['name' => 'Authorized']);
+        $authorization->expects(self::once())->method('allows')->with($user, 'products.create')->willReturn(true);
 
-        self::assertTrue((new AuthorizeUser($authorization))->execute('products.create'));
+        self::assertTrue((new AuthorizeUser($authorization))->execute($user, 'products.create'));
     }
 
     public function test_registration_delegates_to_user_repository(): void

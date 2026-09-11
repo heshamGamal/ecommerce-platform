@@ -2,22 +2,19 @@
 
 namespace App\Modules\Auth\Infrastructure\Authorization;
 
-use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Contracts\AuthorizationServiceInterface;
 use App\Modules\Auth\Domain\Contracts\PermissionRepositoryInterface;
+use App\Models\User;
 
 final class LaravelAuthorizationService implements AuthorizationServiceInterface
 {
     public function __construct(
-        private readonly AuthenticationServiceInterface $authentication,
         private readonly PermissionRepositoryInterface $permissions,
     ) {
     }
 
-    public function allows(string $permission): bool
+    public function allows(User $user, string $permission): bool
     {
-        $user = $this->authentication->user();
-
-        return $user !== null && $this->permissions->userHasPermission($user, $permission);
+        return $this->permissions->userHasPermission($user, $permission);
     }
 }
