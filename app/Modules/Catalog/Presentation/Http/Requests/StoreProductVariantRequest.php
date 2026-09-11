@@ -1,0 +1,9 @@
+<?php
+namespace App\Modules\Catalog\Presentation\Http\Requests;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+class StoreProductVariantRequest extends FormRequest
+{
+ public function authorize(): bool { return $this->user()?->hasPermission('products.create') ?? false; }
+ public function rules(): array { return ['sku'=>['required','string','max:191'],'price'=>['required','integer','min:0'],'compare_at_price'=>['nullable','integer','min:0'],'weight'=>['nullable','numeric','min:0'],'status'=>['required','string','max:50'],'variant_data'=>['nullable','array'],'attribute_value_ids'=>['required','array','min:1'],'attribute_value_ids.*'=>['required','integer','distinct','exists:attribute_values,id']]; }
+}

@@ -1,0 +1,4 @@
+<?php
+namespace App\Modules\Catalog\Application\UseCases\Brands;
+use App\Models\Brand;use App\Modules\Catalog\Application\DTOs\BrandData;use App\Modules\Catalog\Domain\Contracts\BrandRepositoryInterface;use App\Modules\Catalog\Domain\Exceptions\DuplicateSlugException;use Illuminate\Support\Str;
+final class UpdateBrand {public function __construct(private readonly BrandRepositoryInterface $brands){} public function execute(int $id,BrandData $d):Brand{$b=$this->brands->findOrFail($id);$s=Str::slug($d->slug?:$d->name);if($this->brands->slugExists($s,$id))throw new DuplicateSlugException($s);return $this->brands->update($b,$d,$s);}}

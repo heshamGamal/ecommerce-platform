@@ -3,7 +3,7 @@
 namespace App\Modules\Settings\Application\UseCases;
 
 use App\Models\Setting;
-use App\Modules\Settings\Domain\Contracts\SettingRepositoryInterface;
+use App\Modules\Settings\Domain\Contracts\SettingsRepositoryInterface;
 use Illuminate\Support\Collection;
 
 final class GetSettingsByGroup
@@ -11,10 +11,10 @@ final class GetSettingsByGroup
     /**
      * Create a new GetSettingsByGroup use case instance.
      *
-     * @param SettingRepositoryInterface $settings
+     * @param SettingsRepositoryInterface $settings
      */
     public function __construct(
-        private readonly SettingRepositoryInterface $settings,
+        private readonly SettingsRepositoryInterface $settings,
     ) {
     }
 

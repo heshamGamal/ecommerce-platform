@@ -2,17 +2,17 @@
 
 namespace App\Modules\Settings\Application\UseCases;
 
-use App\Modules\Settings\Domain\Contracts\SettingRepositoryInterface;
+use App\Modules\Settings\Domain\Contracts\SettingsRepositoryInterface;
 
 final class GetSetting
 {
     /**
      * Create a new GetSetting use case instance.
      *
-     * @param SettingRepositoryInterface $settings
+     * @param SettingsRepositoryInterface $settings
      */
     public function __construct(
-        private readonly SettingRepositoryInterface $settings,
+        private readonly SettingsRepositoryInterface $settings,
     ) {
     }
 

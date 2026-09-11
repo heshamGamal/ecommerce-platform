@@ -1,4 +1,4 @@
-Enter<?php
+<?php
 
 namespace App\Models;
 

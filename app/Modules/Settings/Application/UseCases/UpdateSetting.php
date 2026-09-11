@@ -4,17 +4,17 @@ namespace App\Modules\Settings\Application\UseCases;
 
 use App\Models\Setting;
 use App\Modules\Settings\Application\DTOs\SettingData;
-use App\Modules\Settings\Domain\Contracts\SettingRepositoryInterface;
+use App\Modules\Settings\Domain\Contracts\SettingsRepositoryInterface;
 
 final class UpdateSetting
 {
     /**
      * Create a new UpdateSetting use case instance.
      *
-     * @param SettingRepositoryInterface $settings
+     * @param SettingsRepositoryInterface $settings
      */
     public function __construct(
-        private readonly SettingRepositoryInterface $settings,
+        private readonly SettingsRepositoryInterface $settings,
     ) {
     }
 
