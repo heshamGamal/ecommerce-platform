@@ -4,6 +4,7 @@ use App\Modules\Catalog\Presentation\Http\Controllers\AttributeController;
 use App\Modules\Catalog\Presentation\Http\Controllers\BrandController;
 use App\Modules\Catalog\Presentation\Http\Controllers\CategoryController;
 use App\Modules\Catalog\Presentation\Http\Controllers\ProductController;
+use App\Modules\Customer\Presentation\Http\Controllers\CustomerController;
 use App\Modules\Settings\Presentation\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,8 @@ Route::middleware('auth')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
     Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
     Route::post('auth/password', [AuthController::class, 'changePassword'])->name('auth.password');
+    Route::get('customer/profile', [CustomerController::class, 'profile'])->name('customer.profile');
+    Route::match(['put', 'patch'], 'customer/profile', [CustomerController::class, 'updateProfile'])->name('customer.profile.update');
     Route::get('products', [ProductController::class, 'index'])->name('products.index');
     Route::post('products', [ProductController::class, 'store'])->name('products.store');
     Route::get('products/{product}', [ProductController::class, 'show'])->name('products.show');

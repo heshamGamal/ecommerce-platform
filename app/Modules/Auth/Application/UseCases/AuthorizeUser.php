@@ -3,6 +3,7 @@
 namespace App\Modules\Auth\Application\UseCases;
 
 use App\Modules\Auth\Domain\Contracts\AuthorizationServiceInterface;
+use App\Modules\Auth\Domain\Exceptions\AuthorizationException;
 
 final class AuthorizeUser
 {
@@ -12,6 +13,10 @@ final class AuthorizeUser
 
     public function execute(string $permission): bool
     {
-        return $this->authorization->allows($permission);
+        if (!$this->authorization->allows($permission)) {
+            throw new AuthorizationException("Missing permission: {$permission}.");
+        }
+
+        return true;
     }
 }

@@ -54,6 +54,8 @@ class RbacSeeder extends Seeder
             ['name' => 'View Customers', 'slug' => 'customers.view', 'group' => 'customers'],
             ['name' => 'Create Customers', 'slug' => 'customers.create', 'group' => 'customers'],
             ['name' => 'Update Customers', 'slug' => 'customers.update', 'group' => 'customers'],
+            ['name' => 'View Own Customer Profile', 'slug' => 'customer.profile.view', 'group' => 'customer-profile'],
+            ['name' => 'Update Own Customer Profile', 'slug' => 'customer.profile.update', 'group' => 'customer-profile'],
 
             // Assistants
             ['name' => 'View Assistants', 'slug' => 'assistants.view', 'group' => 'assistants'],
@@ -116,6 +118,10 @@ class RbacSeeder extends Seeder
         }
 
         $allPermissions = Permission::query()->get();
+        $customerProfilePermissions = $allPermissions->whereIn('slug', [
+            'customer.profile.view',
+            'customer.profile.update',
+        ]);
 
         $roles = [
             'admin' => [
@@ -143,7 +149,7 @@ class RbacSeeder extends Seeder
                 'name' => 'Customer',
                 'description' => 'Store customer account.',
                 'is_system' => true,
-                'permissions' => [],
+                'permissions' => $customerProfilePermissions,
             ],
         ];
 
@@ -165,4 +171,3 @@ class RbacSeeder extends Seeder
         }
     }
 }
-
