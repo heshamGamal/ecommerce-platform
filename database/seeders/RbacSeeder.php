@@ -45,6 +45,7 @@ class RbacSeeder extends Seeder
             ['name' => 'Verify Orders', 'slug' => 'orders.verify', 'group' => 'orders'],
             ['name' => 'Confirm Orders', 'slug' => 'orders.confirm', 'group' => 'orders'],
             ['name' => 'Edit Orders', 'slug' => 'orders.edit', 'group' => 'orders'],
+            ['name' => 'Manage Orders', 'slug' => 'orders.manage', 'group' => 'orders'],
             ['name' => 'Cancel Orders', 'slug' => 'orders.cancel', 'group' => 'orders'],
             ['name' => 'Cancel Orders After Shipping', 'slug' => 'orders.cancel_after_shipping', 'group' => 'orders'],
             ['name' => 'Refund Orders', 'slug' => 'orders.refund', 'group' => 'orders'],
@@ -132,6 +133,12 @@ class RbacSeeder extends Seeder
             'customer.orders.view', 'customer.cart.view', 'customer.cart.manage', 'customer.wishlist.view', 'customer.wishlist.manage',
             'customer.preferences.manage', 'customer.notifications.view',
         ]);
+        $productManagerPermissions = $allPermissions->whereIn('slug', [
+            'products.create',
+        ]);
+        $orderManagerPermissions = $allPermissions->whereIn('slug', [
+            'orders.manage',
+        ]);
 
         $roles = [
             'admin' => [
@@ -160,6 +167,18 @@ class RbacSeeder extends Seeder
                 'description' => 'Store customer account.',
                 'is_system' => true,
                 'permissions' => $customerProfilePermissions,
+            ],
+            'product_manager' => [
+                'name' => 'Product Manager',
+                'description' => 'Can create products without order management access.',
+                'is_system' => true,
+                'permissions' => $productManagerPermissions,
+            ],
+            'order_manager' => [
+                'name' => 'Order Manager',
+                'description' => 'Can manage orders without product deletion access.',
+                'is_system' => true,
+                'permissions' => $orderManagerPermissions,
             ],
         ];
 
