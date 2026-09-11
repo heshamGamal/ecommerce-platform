@@ -1,4 +1,5 @@
 <?php
+use App\Modules\Auth\Presentation\Http\Controllers\AuthController;
 use App\Modules\Catalog\Presentation\Http\Controllers\AttributeController;
 use App\Modules\Catalog\Presentation\Http\Controllers\BrandController;
 use App\Modules\Catalog\Presentation\Http\Controllers\CategoryController;
@@ -6,7 +7,13 @@ use App\Modules\Catalog\Presentation\Http\Controllers\ProductController;
 use App\Modules\Settings\Presentation\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
+Route::post('auth/register', [AuthController::class, 'register'])->middleware('guest')->name('auth.register');
+Route::post('auth/login', [AuthController::class, 'login'])->middleware(['guest', 'throttle:auth-login'])->name('auth.login');
+
 Route::middleware('auth')->group(function () {
+    Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
+    Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
+    Route::post('auth/password', [AuthController::class, 'changePassword'])->name('auth.password');
     Route::get('products', [ProductController::class, 'index'])->name('products.index');
     Route::post('products', [ProductController::class, 'store'])->name('products.store');
     Route::get('products/{product}', [ProductController::class, 'show'])->name('products.show');

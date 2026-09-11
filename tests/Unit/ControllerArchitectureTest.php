@@ -22,6 +22,7 @@ class ControllerArchitectureTest extends TestCase
     {
         $root = dirname(__DIR__, 2).'/app/Modules';
         $controllers = array_merge(
+            glob($root.'/Auth/Presentation/Http/Controllers/*.php') ?: [],
             glob($root.'/Catalog/Presentation/Http/Controllers/*.php') ?: [],
             glob($root.'/Settings/Presentation/Http/Controllers/*.php') ?: [],
         );
