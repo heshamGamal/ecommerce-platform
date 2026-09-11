@@ -2,14 +2,17 @@
 
 namespace App\Modules\Settings\Presentation\Http\Requests;
 
+use App\Modules\Auth\Presentation\Http\Concerns\AuthorizesRequest;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateSettingsRequest extends FormRequest
 {
+    use AuthorizesRequest;
+
     public function authorize(): bool
     {
-        return $this->user()?->hasPermission('settings.update') ?? false;
+        return $this->authorizePermission('settings.update');
     }
 
     public function rules(): array

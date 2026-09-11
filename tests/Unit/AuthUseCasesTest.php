@@ -6,10 +6,12 @@ use App\Models\User;
 use App\Modules\Auth\Application\DTOs\ChangePasswordData;
 use App\Modules\Auth\Application\DTOs\RegisterUserData;
 use App\Modules\Auth\Application\UseCases\ChangePassword;
+use App\Modules\Auth\Application\UseCases\AuthorizeUser;
 use App\Modules\Auth\Application\UseCases\LoginUser;
 use App\Modules\Auth\Application\UseCases\LogoutUser;
 use App\Modules\Auth\Application\UseCases\RegisterUser;
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
+use App\Modules\Auth\Domain\Contracts\AuthorizationServiceInterface;
 use App\Modules\Auth\Domain\Contracts\PasswordServiceInterface;
 use App\Modules\Auth\Domain\Contracts\UserRepositoryInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
@@ -17,6 +19,14 @@ use PHPUnit\Framework\TestCase;
 
 class AuthUseCasesTest extends TestCase
 {
+    public function test_authorization_delegates_to_domain_contract(): void
+    {
+        $authorization = $this->createMock(AuthorizationServiceInterface::class);
+        $authorization->expects(self::once())->method('allows')->with('products.create')->willReturn(true);
+
+        self::assertTrue((new AuthorizeUser($authorization))->execute('products.create'));
+    }
+
     public function test_registration_delegates_to_user_repository(): void
     {
         $data = new RegisterUserData('Customer', 'customer@example.com', null, 'password');

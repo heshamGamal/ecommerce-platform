@@ -1,11 +1,14 @@
 <?php
 namespace App\Modules\Catalog\Presentation\Http\Requests;
 
+use App\Modules\Auth\Presentation\Http\Concerns\AuthorizesRequest;
 use Illuminate\Foundation\Http\FormRequest;
 use LogicException;
 
 final class CatalogActionRequest extends FormRequest
 {
+    use AuthorizesRequest;
+
     public function authorize(): bool
     {
         $permission = match ($this->route()?->getName()) {
@@ -22,7 +25,7 @@ final class CatalogActionRequest extends FormRequest
             default => throw new LogicException('Catalog route is missing an authorization mapping.'),
         };
 
-        return $this->user()?->hasPermission($permission) ?? false;
+        return $this->authorizePermission($permission);
     }
 
     public function rules(): array
