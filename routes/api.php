@@ -7,6 +7,7 @@ use App\Modules\Catalog\Presentation\Http\Controllers\ProductController;
 use App\Modules\Customer\Presentation\Http\Controllers\CustomerController;
 use App\Modules\Customer\Presentation\Http\Controllers\CustomerFeaturesController;
 use App\Modules\Settings\Presentation\Http\Controllers\SettingsController;
+use App\Modules\Staff\Presentation\Http\Controllers\StaffController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('auth/register', [AuthController::class, 'register'])->middleware('guest')->name('auth.register');
@@ -16,6 +17,10 @@ Route::middleware('auth')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
     Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
     Route::post('auth/password', [AuthController::class, 'changePassword'])->name('auth.password');
+    Route::get('staff', [StaffController::class, 'index'])->name('staff.index');
+    Route::post('staff', [StaffController::class, 'store'])->name('staff.store');
+    Route::match(['put', 'patch'], 'staff/{id}', [StaffController::class, 'update'])->name('staff.update');
+    Route::delete('staff/{id}', [StaffController::class, 'destroy'])->name('staff.destroy');
     Route::get('customer/profile', [CustomerController::class, 'profile'])->name('customer.profile');
     Route::match(['put', 'patch'], 'customer/profile', [CustomerController::class, 'updateProfile'])->name('customer.profile.update');
     Route::get('customer/addresses', [CustomerFeaturesController::class, 'addresses'])->name('customer.addresses.index');
