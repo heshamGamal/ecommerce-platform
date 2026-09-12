@@ -11,22 +11,22 @@ use Illuminate\Support\Facades\DB;
 
 final class EloquentShipmentRepository implements ShipmentRepositoryInterface
 {
-    public function find(int $id): Shipment
+    public function find(int $id): object
     {
         $shipment = Shipment::query()->with(['order', 'method', 'events'])->find($id);
         if ($shipment === null) throw new ShipmentNotFoundException('Shipment not found.');
         return $shipment;
     }
-    public function findForUser(int $userId, int $id): Shipment
+    public function findForUser(int $userId, int $id): object
     {
         $shipment = Shipment::query()->with(['order', 'method', 'events'])->where('user_id', $userId)->find($id);
         if ($shipment === null) throw new ShipmentNotFoundException('Shipment not found.');
         return $shipment;
     }
-    public function findByIdempotencyKey(string $key): ?Shipment { return Shipment::query()->with(['order', 'method'])->where('idempotency_key', $key)->first(); }
+    public function findByIdempotencyKey(string $key): ?object { return Shipment::query()->with(['order', 'method'])->where('idempotency_key', $key)->first(); }
     public function listForUserOrder(int $userId, int $orderId): iterable { return Shipment::query()->with(['method', 'events'])->where('user_id', $userId)->where('order_id', $orderId)->latest()->get(); }
-    public function create(array $attributes): Shipment { return Shipment::query()->create($attributes)->load(['order', 'method', 'events']); }
-    public function updateStatus(Shipment $shipment, string $status, ?int $actorId, ?string $note = null): Shipment
+    public function create(array $attributes): object { return Shipment::query()->create($attributes)->load(['order', 'method', 'events']); }
+    public function updateStatus(object $shipment, string $status, ?int $actorId, ?string $note = null): object
     {
         return DB::transaction(function () use ($shipment, $status, $actorId, $note): Shipment {
             $locked = Shipment::query()->lockForUpdate()->find($shipment->id);

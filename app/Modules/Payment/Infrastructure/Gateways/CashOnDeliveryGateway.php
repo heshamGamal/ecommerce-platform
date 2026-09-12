@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 final class CashOnDeliveryGateway implements PaymentGatewayInterface
 {
-    public function createPayment(CustomerOrder $order, string $idempotencyKey): array
+    public function createPayment(object $order, string $idempotencyKey): array
     {
         return [
             'status' => 'pending',
@@ -18,12 +18,12 @@ final class CashOnDeliveryGateway implements PaymentGatewayInterface
         ];
     }
 
-    public function confirmPayment(Payment $payment): array
+    public function confirmPayment(object $payment): array
     {
         return ['status' => 'paid', 'metadata' => ['confirmed_by' => 'cash_on_delivery']];
     }
 
-    public function refundPayment(Payment $payment): array
+    public function refundPayment(object $payment): array
     {
         return ['status' => 'refunded', 'metadata' => ['refunded_by' => 'cash_on_delivery']];
     }
