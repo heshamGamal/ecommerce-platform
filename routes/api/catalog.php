@@ -37,6 +37,6 @@ Route::middleware('auth')->group(function (): void {
     Route::post('attributes/{attribute}/values', [AttributeController::class, 'storeValue'])->name('attributes.values.store');
     Route::match(['put', 'patch'], 'attributes/{attribute}/values/{value}', [AttributeController::class, 'updateValue'])->name('attributes.values.update');
     Route::delete('attributes/{attribute}/values/{value}', [AttributeController::class, 'destroyValue'])->name('attributes.values.destroy');
-    Route::apiResource('brands', BrandController::class)->parameters(['brands' => 'id']);
-    Route::apiResource('categories', CategoryController::class)->parameters(['categories' => 'id']);
+    Route::apiResource('brands', BrandController::class)->parameters(['brands' => 'brandId']);
+    Route::apiResource('categories', CategoryController::class)->parameters(['categories' => 'categoryId']);
 });
