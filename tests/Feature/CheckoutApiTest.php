@@ -114,4 +114,34 @@ final class CheckoutApiTest extends TestCase
         $this->assertDatabaseCount('shipments', 1);
         $this->assertDatabaseCount('payments', 1);
     }
+
+    public function test_checkout_rolls_back_order_and_inventory_when_shipping_creation_fails(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $user = User::factory()->create();
+        $product = Product::query()->create([
+            'name' => 'Rollback Product', 'slug' => 'rollback-product',
+            'type' => 'simple', 'status' => 'active', 'price' => 500,
+        ]);
+        $address = CustomerAddress::query()->create([
+            'user_id' => $user->id, 'recipient_name' => 'Customer', 'phone' => '01000000000',
+            'address_line1' => 'Street 1', 'city' => 'Cairo', 'country' => 'EG', 'is_default' => true,
+        ]);
+        $cart = CustomerCart::query()->create(['user_id' => $user->id]);
+        $cart->items()->create(['product_id' => $product->id, 'quantity' => 2]);
+        InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 5, 'reserved' => 0]);
+
+        $this->actingAs($user)->postJson('/api/customer/checkout', [
+            'address_id' => $address->id,
+            'currency' => 'EGP',
+            'idempotency_key' => 'rollback-order',
+            'shipping_method_id' => 999999,
+            'shipping_idempotency_key' => 'rollback-shipment',
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseCount('customer_orders', 0);
+        $this->assertDatabaseCount('shipments', 0);
+        $this->assertDatabaseHas('inventory_items', ['product_id' => $product->id, 'on_hand' => 5, 'reserved' => 0]);
+        $this->assertDatabaseCount('customer_cart_items', 1);
+    }
 }
