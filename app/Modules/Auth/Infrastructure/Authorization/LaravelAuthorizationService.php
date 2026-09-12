@@ -13,7 +13,7 @@ final class LaravelAuthorizationService implements AuthorizationServiceInterface
     ) {
     }
 
-    public function allows(User $user, string $permission): bool
+    public function allows(object $user, string $permission): bool
     {
         return $this->permissions->userHasPermission($user, $permission);
     }

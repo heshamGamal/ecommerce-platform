@@ -2,9 +2,7 @@
 
 namespace App\Modules\Auth\Domain\Contracts;
 
-use App\Models\User;
-
 interface PermissionRepositoryInterface
 {
-    public function userHasPermission(User $user, string $permission): bool;
+    public function userHasPermission(object $user, string $permission): bool;
 }

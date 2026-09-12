@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 
 final class EloquentUserRepository implements UserRepositoryInterface
 {
-    public function findByIdentifier(string $identifier): ?User
+    public function findByIdentifier(string $identifier): ?object
     {
         return User::query()
             ->where('email', $identifier)
@@ -18,12 +18,12 @@ final class EloquentUserRepository implements UserRepositoryInterface
             ->first();
     }
 
-    public function findById(int $id): ?User
+    public function findById(int $id): ?object
     {
         return User::query()->find($id);
     }
 
-    public function create(RegisterUserData $data): User
+    public function create(RegisterUserData $data): object
     {
         $user = User::query()->create([
             'name' => $data->name,
@@ -41,7 +41,7 @@ final class EloquentUserRepository implements UserRepositoryInterface
         return $user;
     }
 
-    public function updatePassword(User $user, string $password): User
+    public function updatePassword(object $user, string $password): object
     {
         $user->forceFill(['password' => Hash::make($password)])->save();
 

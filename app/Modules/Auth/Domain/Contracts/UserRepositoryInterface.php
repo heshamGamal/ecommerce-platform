@@ -2,16 +2,15 @@
 
 namespace App\Modules\Auth\Domain\Contracts;
 
-use App\Models\User;
 use App\Modules\Auth\Domain\ValueObjects\RegisterUserData;
 
 interface UserRepositoryInterface
 {
-    public function findByIdentifier(string $identifier): ?User;
+    public function findByIdentifier(string $identifier): ?object;
 
-    public function findById(int $id): ?User;
+    public function findById(int $id): ?object;
 
-    public function create(RegisterUserData $data): User;
+    public function create(RegisterUserData $data): object;
 
-    public function updatePassword(User $user, string $password): User;
+    public function updatePassword(object $user, string $password): object;
 }

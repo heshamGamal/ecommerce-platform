@@ -25,7 +25,7 @@ final class LaravelSessionAuthenticationService implements AuthenticationService
         return $guard;
     }
 
-    public function attempt(string $identifier, string $password, bool $remember = false): ?User
+    public function attempt(string $identifier, string $password, bool $remember = false): ?object
     {
         $user = $this->users->findByIdentifier($identifier);
 
@@ -40,7 +40,7 @@ final class LaravelSessionAuthenticationService implements AuthenticationService
         return $this->guard()->user();
     }
 
-    public function login(User $user, bool $remember = false): void
+    public function login(object $user, bool $remember = false): void
     {
         $this->guard()->login($user, $remember);
     }
@@ -50,7 +50,7 @@ final class LaravelSessionAuthenticationService implements AuthenticationService
         $this->guard()->logout();
     }
 
-    public function user(): ?User
+    public function user(): ?object
     {
         /** @var User|null $user */
         $user = $this->guard()->user();

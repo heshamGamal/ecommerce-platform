@@ -2,15 +2,13 @@
 
 namespace App\Modules\Auth\Domain\Contracts;
 
-use App\Models\User;
-
 interface AuthenticationServiceInterface
 {
-    public function attempt(string $identifier, string $password, bool $remember = false): ?User;
+    public function attempt(string $identifier, string $password, bool $remember = false): ?object;
 
-    public function login(User $user, bool $remember = false): void;
+    public function login(object $user, bool $remember = false): void;
 
     public function logout(): void;
 
-    public function user(): ?User;
+    public function user(): ?object;
 }

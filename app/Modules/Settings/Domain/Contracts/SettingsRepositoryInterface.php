@@ -2,15 +2,13 @@
 
 namespace App\Modules\Settings\Domain\Contracts;
 
-use App\Models\Setting;
 use App\Modules\Settings\Domain\ValueObjects\SettingData;
-use Illuminate\Support\Collection;
 
 interface SettingsRepositoryInterface
 {
-    public function findByKey(string $key): ?Setting;
-    public function getByGroup(string $group): Collection;
-    public function getAll(): Collection;
-    public function save(SettingData $data): Setting;
+    public function findByKey(string $key): ?object;
+    public function getByGroup(string $group): iterable;
+    public function getAll(): iterable;
+    public function save(SettingData $data): object;
     public function delete(string $key): bool;
 }

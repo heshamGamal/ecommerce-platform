@@ -7,7 +7,7 @@ use App\Modules\Auth\Domain\Contracts\PermissionRepositoryInterface;
 
 final class EloquentPermissionRepository implements PermissionRepositoryInterface
 {
-    public function userHasPermission(User $user, string $permission): bool
+    public function userHasPermission(object $user, string $permission): bool
     {
         $override = $user->permissionOverrides()
             ->where('slug', $permission)
