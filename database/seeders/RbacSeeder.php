@@ -45,6 +45,16 @@ class RbacSeeder extends Seeder
             ['name' => 'Update Brands', 'slug' => 'brands.update', 'group' => 'catalog'],
             ['name' => 'Delete Brands', 'slug' => 'brands.delete', 'group' => 'catalog'],
 
+            // Promotions and Taxes
+            ['name' => 'View Promotions', 'slug' => 'promotions.view', 'group' => 'promotions'],
+            ['name' => 'Create Promotions', 'slug' => 'promotions.create', 'group' => 'promotions'],
+            ['name' => 'Update Promotions', 'slug' => 'promotions.update', 'group' => 'promotions'],
+            ['name' => 'Delete Promotions', 'slug' => 'promotions.delete', 'group' => 'promotions'],
+            ['name' => 'View Taxes', 'slug' => 'taxes.view', 'group' => 'taxes'],
+            ['name' => 'Create Taxes', 'slug' => 'taxes.create', 'group' => 'taxes'],
+            ['name' => 'Update Taxes', 'slug' => 'taxes.update', 'group' => 'taxes'],
+            ['name' => 'Delete Taxes', 'slug' => 'taxes.delete', 'group' => 'taxes'],
+
             // Inventory
             ['name' => 'View Inventory', 'slug' => 'inventory.view', 'group' => 'inventory'],
             ['name' => 'Adjust Inventory', 'slug' => 'inventory.adjust', 'group' => 'inventory'],

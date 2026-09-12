@@ -17,6 +17,8 @@ use App\Modules\Payment\Presentation\Http\Controllers\KashierWebhookController;
 use App\Modules\Payment\Presentation\Http\Controllers\OperationalDashboardController;
 use App\Modules\Shipping\Presentation\Http\Controllers\ShippingController;
 use App\Modules\Shipping\Presentation\Http\Controllers\BostaWebhookController;
+use App\Modules\Promotion\Presentation\Http\Controllers\CouponController;
+use App\Modules\Tax\Presentation\Http\Controllers\TaxRuleController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('auth/register', [AuthController::class, 'register'])->middleware('guest')->name('auth.register');
@@ -109,4 +111,6 @@ Route::middleware('auth')->group(function () {
     Route::match(['put', 'patch'], 'shipping-methods/{id}', [ShippingController::class, 'update'])->name('shipping-methods.update');
     Route::delete('shipping-methods/{id}', [ShippingController::class, 'destroy'])->name('shipping-methods.destroy');
     Route::patch('shipments/{id}/status', [ShippingController::class, 'status'])->name('shipments.status');
+    Route::apiResource('coupons', CouponController::class)->parameters(['coupons' => 'id']);
+    Route::apiResource('tax-rules', TaxRuleController::class)->parameters(['tax-rules' => 'id']);
 });
