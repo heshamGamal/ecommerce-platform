@@ -14,6 +14,9 @@ use App\Modules\Customer\Domain\Exceptions\AddressNotFoundException;
 use App\Modules\Settings\Domain\Exceptions\SettingsNotFoundException;
 use App\Modules\Staff\Domain\Exceptions\StaffNotFoundException;
 use App\Modules\Staff\Domain\Exceptions\StaffActionNotAllowedException;
+use App\Modules\Inventory\Domain\Exceptions\InventoryNotFoundException;
+use App\Modules\Inventory\Domain\Exceptions\InsufficientStockException;
+use App\Modules\Inventory\Domain\Exceptions\InvalidStockAdjustmentException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -29,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
   $exceptions->render(function(DomainAuthenticationException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],401);});
   $exceptions->render(function(DomainAuthorizationException|StaffActionNotAllowedException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],403);});
   $exceptions->render(function(BusinessRuleException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],409);});
-  $exceptions->render(function(ProductNotFoundException|VariantNotFoundException|AttributeNotFoundException|AttributeValueNotFoundException|BrandNotFoundException|CategoryNotFoundException|SettingsNotFoundException|CustomerNotFoundException|CustomerFeatureNotFoundException|AddressNotFoundException|StaffNotFoundException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],404);});
+  $exceptions->render(function(InsufficientStockException|InvalidStockAdjustmentException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});
+  $exceptions->render(function(ProductNotFoundException|VariantNotFoundException|AttributeNotFoundException|AttributeValueNotFoundException|BrandNotFoundException|CategoryNotFoundException|SettingsNotFoundException|CustomerNotFoundException|CustomerFeatureNotFoundException|AddressNotFoundException|StaffNotFoundException|InventoryNotFoundException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],404);});
   $exceptions->render(function(HttpExceptionInterface $e,Request $r){if($r->is('api/*')&&$e->getStatusCode()===403)return response()->json(['message'=>'Forbidden.'],403);});
  })->create();

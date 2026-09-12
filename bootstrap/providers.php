@@ -4,5 +4,6 @@ use App\Modules\Catalog\CatalogServiceProvider;
 use App\Modules\Customer\CustomerServiceProvider;
 use App\Modules\Settings\SettingsServiceProvider;
 use App\Modules\Staff\StaffServiceProvider;
+use App\Modules\Inventory\InventoryServiceProvider;
 use App\Providers\AppServiceProvider;
-return [AppServiceProvider::class,AuthServiceProvider::class,CatalogServiceProvider::class,CustomerServiceProvider::class,SettingsServiceProvider::class,StaffServiceProvider::class];
+return [AppServiceProvider::class,AuthServiceProvider::class,CatalogServiceProvider::class,CustomerServiceProvider::class,SettingsServiceProvider::class,StaffServiceProvider::class,InventoryServiceProvider::class];

@@ -8,6 +8,7 @@ use App\Modules\Customer\Presentation\Http\Controllers\CustomerController;
 use App\Modules\Customer\Presentation\Http\Controllers\CustomerFeaturesController;
 use App\Modules\Settings\Presentation\Http\Controllers\SettingsController;
 use App\Modules\Staff\Presentation\Http\Controllers\StaffController;
+use App\Modules\Inventory\Presentation\Http\Controllers\InventoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('auth/register', [AuthController::class, 'register'])->middleware('guest')->name('auth.register');
@@ -21,6 +22,10 @@ Route::middleware('auth')->group(function () {
     Route::post('staff', [StaffController::class, 'store'])->name('staff.store');
     Route::match(['put', 'patch'], 'staff/{id}', [StaffController::class, 'update'])->name('staff.update');
     Route::delete('staff/{id}', [StaffController::class, 'destroy'])->name('staff.destroy');
+    Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::post('inventory/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
+    Route::post('inventory/reserve', [InventoryController::class, 'reserve'])->name('inventory.reserve');
+    Route::post('inventory/release', [InventoryController::class, 'release'])->name('inventory.release');
     Route::get('customer/profile', [CustomerController::class, 'profile'])->name('customer.profile');
     Route::match(['put', 'patch'], 'customer/profile', [CustomerController::class, 'updateProfile'])->name('customer.profile.update');
     Route::get('customer/addresses', [CustomerFeaturesController::class, 'addresses'])->name('customer.addresses.index');
