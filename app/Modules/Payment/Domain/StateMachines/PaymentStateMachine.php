@@ -12,9 +12,9 @@ final class PaymentStateMachine
             return;
         }
         $allowed = [
-            'pending' => ['processing', 'provider_created', 'confirmed', 'failed'],
-            'processing' => ['pending', 'provider_created', 'confirmed', 'failed'],
-            'provider_created' => ['confirmed', 'failed'],
+            'pending' => ['processing', 'provider_created', 'confirmed', 'paid', 'failed'],
+            'processing' => ['pending', 'provider_created', 'confirmed', 'paid', 'failed'],
+            'provider_created' => ['confirmed', 'paid', 'failed'],
             'confirmed' => ['refunded'],
             'paid' => ['confirmed', 'refunded'],
             'failed' => ['processing', 'confirmed'],

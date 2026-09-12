@@ -8,6 +8,7 @@ use App\Modules\Order\Domain\Contracts\TransactionManagerInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
+use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;
 use App\Modules\Payment\Infrastructure\Webhooks\KashierWebhookVerifier;
 use Illuminate\Database\QueryException;
 
@@ -38,6 +39,9 @@ final class ProcessKashierWebhook
         $payment ??= $this->payments->findByProviderReference((string) ($payload['orderId'] ?? ''));
         if ($payment === null) {
             throw new PaymentException('Kashier webhook does not match a local payment.');
+        }
+        if (abs((float) ($payload['amount'] ?? -1) - (float) $payment->amount) > 0.001) {
+            throw new PaymentAmountMismatchException('Kashier webhook amount does not match the local payment.');
         }
 
         try {

@@ -47,7 +47,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 return Application::configure(basePath: dirname(__DIR__))
  ->withRouting(web:__DIR__.'/../routes/web.php',api:__DIR__.'/../routes/api.php',commands:__DIR__.'/../routes/console.php',health:'/up')
- ->withCommands([__DIR__.'/../app/Modules/Shared/Infrastructure/Console/DispatchOutbox.php',__DIR__.'/../app/Modules/Payment/Infrastructure/Console/ReconcileStalePayments.php',__DIR__.'/../app/Modules/Shipping/Infrastructure/Console/ReconcileStaleShipments.php'])
+ ->withCommands([__DIR__.'/../app/Modules/Shared/Infrastructure/Console/DispatchOutbox.php',__DIR__.'/../app/Console/Commands/ReconcileStalePayments.php',__DIR__.'/../app/Console/Commands/VerifyProviderSandbox.php',__DIR__.'/../app/Console/Commands/ReconcileStaleShipments.php'])
  ->withMiddleware(function(Middleware $middleware):void{})
  ->withSchedule(function(Schedule $schedule):void{$time='00:30';try{$configured=Setting::query()->where('key','cart.abandoned_scan_time')->value('value');if(is_string($configured)&&preg_match('/^([01]\d|2[0-3]):[0-5]\d$/',$configured))$time=$configured;}catch(\Throwable $e){}$schedule->command('cart:mark-abandoned')->dailyAt($time);$schedule->command('outbox:dispatch')->everyMinute();$schedule->command('payments:reconcile')->everyFiveMinutes();$schedule->command('shipments:reconcile')->everyTenMinutes();})
  ->withExceptions(function(Exceptions $exceptions):void{

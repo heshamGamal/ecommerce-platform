@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Modules\Payment\Infrastructure\Console;
+namespace App\Console\Commands;
 
 use App\Models\Payment;
 use App\Modules\Payment\Application\UseCases\ReconcilePayment;
 use Illuminate\Console\Command;
 
+if (! class_exists(__NAMESPACE__ . '\\ReconcileStalePayments', false)) {
 final class ReconcileStalePayments extends Command
 {
     protected $signature = 'payments:reconcile {--minutes=5 : Minimum age of a non-terminal payment}';
@@ -27,4 +28,5 @@ final class ReconcileStalePayments extends Command
         $this->info("Reconciled {$count} payment(s).");
         return self::SUCCESS;
     }
+}
 }

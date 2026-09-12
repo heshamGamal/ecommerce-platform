@@ -2,6 +2,8 @@
 
 namespace App\Modules\Payment\Application\UseCases;
 
+use App\Models\AuditLog;
+
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
 use App\Modules\Order\Domain\Contracts\TransactionManagerInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentGatewayInterface;
@@ -39,13 +41,14 @@ final class ConfirmPayment
             if (! in_array($locked->status, ['pending', 'processing'], true)) {
                 throw InvalidPaymentTransitionException::from($locked->status, 'confirmed');
             }
-            $confirmed = $this->payments->updateStatus($locked, 'confirmed', [
+            $confirmed = $this->payments->updateStatus($locked, 'paid', [
                 'provider_reference' => $result['provider_reference'] ?? $locked->provider_reference,
                 'metadata' => $result['metadata'] ?? $locked->metadata,
             ]);
             if ($order->status === 'pending') {
                 $this->orders->updateStatus($order->id, 'confirmed');
             }
+            AuditLog::query()->create(['actor_id' => auth()->id(), 'action' => 'payment.confirmed', 'target_type' => get_class($confirmed), 'target_id' => $confirmed->id, 'metadata' => ['provider_reference' => $confirmed->provider_reference]]);
 
             return $confirmed;
         });

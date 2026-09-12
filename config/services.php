@@ -24,6 +24,7 @@ return [
         'notification_url' => env('PAYMOB_NOTIFICATION_URL'),
         'redirection_url' => env('PAYMOB_REDIRECTION_URL'),
         'timeout' => (int) env('PAYMOB_TIMEOUT', 15),
+        'sandbox_probe_url' => env('PAYMOB_SANDBOX_PROBE_URL'),
     ],
     'kashier' => [
         'enabled' => (bool) env('KASHIER_ENABLED', false),
@@ -36,6 +37,7 @@ return [
         'webhook_url' => env('KASHIER_WEBHOOK_URL'),
         'redirect_url' => env('KASHIER_REDIRECT_URL'),
         'timeout' => (int) env('KASHIER_TIMEOUT', 15),
+        'sandbox_probe_url' => env('KASHIER_SANDBOX_PROBE_URL'),
     ],
     'bosta' => [
         'enabled' => (bool) env('BOSTA_ENABLED', false),

@@ -14,6 +14,7 @@ use App\Modules\Order\Presentation\Http\Controllers\OrderController;
 use App\Modules\Payment\Presentation\Http\Controllers\PaymentController;
 use App\Modules\Payment\Presentation\Http\Controllers\PaymobWebhookController;
 use App\Modules\Payment\Presentation\Http\Controllers\KashierWebhookController;
+use App\Modules\Payment\Presentation\Http\Controllers\OperationalDashboardController;
 use App\Modules\Shipping\Presentation\Http\Controllers\ShippingController;
 use App\Modules\Shipping\Presentation\Http\Controllers\BostaWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -99,6 +100,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
     Route::post('orders/{id}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     Route::get('payments/orders/{orderId}', [PaymentController::class, 'adminIndex'])->name('payments.index');
+    Route::get('operations/dashboard', OperationalDashboardController::class)->name('operations.dashboard');
     Route::post('payments/{paymentId}/confirm', [PaymentController::class, 'confirm'])->name('payments.confirm');
     Route::post('payments/{paymentId}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
     Route::get('shipping-methods', [ShippingController::class, 'index'])->name('shipping-methods.index');

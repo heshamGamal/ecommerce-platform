@@ -2,6 +2,9 @@
 
 namespace App\Modules\Payment\Application\UseCases;
 
+use App\Models\AuditLog;
+use App\Models\OutboxEvent;
+
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
 use App\Modules\Order\Domain\Contracts\TransactionManagerInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentGatewayInterface;
@@ -46,6 +49,7 @@ final class RefundPayment
                 throw new PaymentFailedException('Payment refund failed.');
             }
             $this->operations->complete((int) $payment->id, 'refund', 'confirmed', $payment->provider_reference, $result);
+            OutboxEvent::query()->firstOrCreate(['deduplication_key' => 'payment:refund:' . $payment->id], ['aggregate_type' => 'payment', 'aggregate_id' => $payment->id, 'event_type' => 'payment.refund.completed', 'status' => 'pending', 'payload' => ['payment_id' => $payment->id, 'provider_reference' => $payment->provider_reference]]);
         } catch (\Throwable $exception) {
             $this->operations->fail((int) $payment->id, 'refund', $exception->getMessage(), ! ($exception instanceof PaymentFailedException));
             throw $exception;
@@ -59,6 +63,7 @@ final class RefundPayment
                 'metadata' => $result['metadata'] ?? $locked->metadata,
             ]);
             $this->orders->markRefunded($payment->order_id);
+            AuditLog::query()->create(['actor_id' => auth()->id(), 'action' => 'payment.refunded', 'target_type' => get_class($refunded), 'target_id' => $refunded->id, 'metadata' => ['provider_reference' => $refunded->provider_reference]]);
 
             return $refunded;
         });

@@ -8,6 +8,7 @@ use App\Modules\Order\Domain\Contracts\TransactionManagerInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
+use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;
 use App\Modules\Payment\Infrastructure\Webhooks\PaymobWebhookVerifier;
 use Illuminate\Database\QueryException;
 
@@ -42,6 +43,9 @@ final class ProcessPaymobWebhook
         $payment ??= $this->payments->findByProviderReference($reference);
         if ($payment === null) {
             throw new PaymentException('Paymob webhook does not match a local payment.');
+        }
+        if ((int) ($object['amount_cents'] ?? $payload['amount_cents'] ?? -1) !== (int) $payment->amount) {
+            throw new PaymentAmountMismatchException('Paymob webhook amount does not match the local payment.');
         }
 
         try {

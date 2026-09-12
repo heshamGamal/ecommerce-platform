@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Modules\Shipping\Infrastructure\Console;
+namespace App\Console\Commands;
 
 use App\Models\Shipment;
 use App\Modules\Shipping\Application\UseCases\ReconcileShipment;
 use Illuminate\Console\Command;
 
+if (! class_exists(__NAMESPACE__ . '\\ReconcileStaleShipments', false)) {
 final class ReconcileStaleShipments extends Command
 {
     protected $signature = 'shipments:reconcile {--minutes=10 : Minimum age of an active shipment}';
@@ -27,4 +28,5 @@ final class ReconcileStaleShipments extends Command
         $this->info("Reconciled {$count} shipment(s).");
         return self::SUCCESS;
     }
+}
 }

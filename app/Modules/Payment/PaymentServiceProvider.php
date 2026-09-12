@@ -5,9 +5,11 @@ namespace App\Modules\Payment;
 use App\Modules\Payment\Domain\Contracts\PaymentGatewayInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
+use App\Modules\Payment\Domain\Contracts\OperationalDashboardReaderInterface;
 use App\Modules\Payment\Infrastructure\Gateways\PaymentGatewayRouter;
 use App\Modules\Payment\Infrastructure\Persistence\EloquentPaymentRepository;
 use App\Modules\Payment\Infrastructure\Persistence\EloquentPaymentOperationRepository;
+use App\Modules\Payment\Infrastructure\Persistence\EloquentOperationalDashboardReader;
 use Illuminate\Support\ServiceProvider;
 
 final class PaymentServiceProvider extends ServiceProvider
@@ -16,5 +18,6 @@ final class PaymentServiceProvider extends ServiceProvider
         PaymentRepositoryInterface::class => EloquentPaymentRepository::class,
         PaymentGatewayInterface::class => PaymentGatewayRouter::class,
         PaymentOperationRepositoryInterface::class => EloquentPaymentOperationRepository::class,
+        OperationalDashboardReaderInterface::class => EloquentOperationalDashboardReader::class,
     ];
 }

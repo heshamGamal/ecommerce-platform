@@ -6,6 +6,7 @@ use App\Models\OutboxEvent;
 use App\Modules\Shared\Application\Jobs\ProcessOutboxEvent;
 use Illuminate\Console\Command;
 
+if (! class_exists(__NAMESPACE__ . '\\DispatchOutbox', false)) {
 final class DispatchOutbox extends Command
 {
     protected $signature = 'outbox:dispatch {--limit=100 : Maximum events to enqueue in one pass}';
@@ -35,4 +36,5 @@ final class DispatchOutbox extends Command
         $this->info("Dispatched {$count} outbox event(s).");
         return self::SUCCESS;
     }
+}
 }

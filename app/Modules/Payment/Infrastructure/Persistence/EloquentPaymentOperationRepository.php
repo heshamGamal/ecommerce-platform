@@ -20,6 +20,21 @@ final class EloquentPaymentOperationRepository implements PaymentOperationReposi
         $operationRecord->save();
     }
 
+    public function acquireLease(int $paymentId, string $operation, string $token, int $seconds = 300): bool
+    {
+        $now = now();
+        return PaymentOperation::query()->where('payment_id', $paymentId)->where('operation', $operation)
+            ->where(function ($query) use ($token, $now): void {
+                $query->whereNull('lease_token')->orWhere('lease_expires_at', '<=', $now)->orWhere('lease_token', $token);
+            })->update(['lease_token' => $token, 'lease_expires_at' => $now->addSeconds($seconds)]) === 1;
+    }
+
+    public function releaseLease(int $paymentId, string $operation, string $token): void
+    {
+        PaymentOperation::query()->where('payment_id', $paymentId)->where('operation', $operation)->where('lease_token', $token)
+            ->update(['lease_token' => null, 'lease_expires_at' => null]);
+    }
+
     public function successfulResponse(int $paymentId, string $operation): ?array
     {
         $record = PaymentOperation::query()->where('payment_id', $paymentId)->where('operation', $operation)->first();
@@ -37,6 +52,8 @@ final class EloquentPaymentOperationRepository implements PaymentOperationReposi
             'response_payload' => $response,
             'last_error' => null,
             'next_retry_at' => null,
+            'lease_token' => null,
+            'lease_expires_at' => null,
         ]);
     }
 
@@ -46,6 +63,8 @@ final class EloquentPaymentOperationRepository implements PaymentOperationReposi
             'status' => $retryable ? 'processing' : 'failed',
             'last_error' => $error,
             'next_retry_at' => $retryable ? now()->addMinutes(5) : null,
+            'lease_token' => null,
+            'lease_expires_at' => null,
         ]);
     }
 }
