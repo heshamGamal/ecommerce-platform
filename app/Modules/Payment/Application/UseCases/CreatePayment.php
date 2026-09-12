@@ -27,7 +27,7 @@ final class CreatePayment
         if ($user === null) {
             throw new AuthenticationException('Unauthenticated.');
         }
-        if ($data->method !== 'cash_on_delivery') {
+        if (! $this->gateway->supports($data->method)) {
             throw new PaymentException('Unsupported payment method.');
         }
 
@@ -39,29 +39,36 @@ final class CreatePayment
             throw new PaymentAmountMismatchException('Payment amount does not match the order.');
         }
 
-        $existing = $this->payments->findByIdempotencyKey($data->idempotencyKey);
-        if ($existing !== null) {
-            if ($existing->order_id !== $order->id) {
-                throw new PaymentException('Idempotency key belongs to another order.');
-            }
-
-            return $existing;
-        }
-
-        $result = $this->gateway->createPayment($order, $data->idempotencyKey);
-        if (($result['status'] ?? null) === 'failed') {
-            throw new PaymentFailedException('Payment creation failed.');
-        }
-
-        return $this->payments->create([
+        $claim = $this->payments->claim($data->idempotencyKey, [
             'order_id' => $order->id,
             'user_id' => $user->id,
             'method' => $data->method,
-            'provider_reference' => $result['provider_reference'],
             'amount' => $order->total_amount,
             'currency' => $order->currency,
-            'status' => $result['status'],
-            'idempotency_key' => $data->idempotencyKey,
+            'metadata' => ['idempotency_key' => $data->idempotencyKey],
+        ]);
+        if (! $claim->acquired) {
+            if ($claim->payment->order_id !== $order->id) {
+                throw new PaymentException('Idempotency key belongs to another order.');
+            }
+
+            return $claim->payment;
+        }
+
+        try {
+            $result = $this->gateway->createPayment($order, $data->idempotencyKey);
+            if (($result['status'] ?? null) === 'failed') {
+                throw new PaymentFailedException('Payment creation failed.');
+            }
+        } catch (\Throwable $exception) {
+            $this->payments->updateStatus($claim->payment, 'failed', [
+                'metadata' => ['failure' => $exception->getMessage()],
+            ]);
+            throw $exception;
+        }
+
+        return $this->payments->updateStatus($claim->payment, $result['status'], [
+            'provider_reference' => $result['provider_reference'] ?? null,
             'metadata' => $result['metadata'] ?? null,
         ]);
     }

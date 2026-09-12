@@ -5,6 +5,9 @@ namespace App\Modules\Payment\Infrastructure\Persistence;
 use App\Models\Payment;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentNotFoundException;
+use App\Modules\Payment\Domain\ValueObjects\PaymentClaim;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 final class EloquentPaymentRepository implements PaymentRepositoryInterface
 {
@@ -56,6 +59,46 @@ final class EloquentPaymentRepository implements PaymentRepositoryInterface
     public function create(array $attributes): object
     {
         return Payment::query()->create($attributes)->load('order');
+    }
+
+    public function start(array $attributes): object
+    {
+        try {
+            return $this->create($attributes);
+        } catch (QueryException $exception) {
+            // The unique idempotency constraint is the distributed lock. If two
+            // requests race, return the row committed by the winner.
+            $existing = $this->findByIdempotencyKey((string) $attributes['idempotency_key']);
+            if ($existing !== null) {
+                return $existing;
+            }
+            throw $exception;
+        }
+    }
+
+    public function claim(string $idempotencyKey, array $attributes): PaymentClaim
+    {
+        return DB::transaction(function () use ($idempotencyKey, $attributes): PaymentClaim {
+            $existing = Payment::query()->with('order')->lockForUpdate()->where('idempotency_key', $idempotencyKey)->first();
+            if ($existing !== null) {
+                return new PaymentClaim($existing, false);
+            }
+
+            try {
+                $payment = Payment::query()->create(array_merge($attributes, [
+                    'idempotency_key' => $idempotencyKey,
+                    'status' => 'initiating',
+                ]))->load('order');
+
+                return new PaymentClaim($payment, true);
+            } catch (QueryException $exception) {
+                $existing = Payment::query()->with('order')->where('idempotency_key', $idempotencyKey)->first();
+                if ($existing !== null) {
+                    return new PaymentClaim($existing, false);
+                }
+                throw $exception;
+            }
+        });
     }
 
     public function updateStatus(object $payment, string $status, array $attributes = []): object

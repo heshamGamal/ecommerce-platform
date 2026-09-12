@@ -17,7 +17,8 @@ final class OrderRequest extends FormRequest
 
         $permission = match ($this->route()?->getName()) {
             'orders.index', 'orders.show' => 'orders.view',
-            'customer.orders.index', 'customer.orders.show', 'customer.orders.cancel' => 'customer.orders.view',
+            'customer.orders.index', 'customer.orders.show' => 'customer.orders.view',
+            'customer.orders.cancel' => 'customer.orders.manage',
             'orders.status' => 'orders.edit',
             'orders.cancel' => 'orders.cancel',
             default => 'orders.view',

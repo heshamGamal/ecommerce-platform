@@ -7,6 +7,7 @@ use App\Models\ShipmentEvent;
 use App\Modules\Shipping\Domain\Contracts\ShipmentRepositoryInterface;
 use App\Modules\Shipping\Domain\Exceptions\ShipmentNotFoundException;
 use App\Modules\Shipping\Domain\Exceptions\InvalidShipmentTransitionException;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 final class EloquentShipmentRepository implements ShipmentRepositoryInterface
@@ -25,7 +26,16 @@ final class EloquentShipmentRepository implements ShipmentRepositoryInterface
     }
     public function findByIdempotencyKey(string $key): ?object { return Shipment::query()->with(['order', 'method'])->where('idempotency_key', $key)->first(); }
     public function listForUserOrder(int $userId, int $orderId): iterable { return Shipment::query()->with(['method', 'events'])->where('user_id', $userId)->where('order_id', $orderId)->latest()->get(); }
-    public function create(array $attributes): object { return Shipment::query()->create($attributes)->load(['order', 'method', 'events']); }
+    public function create(array $attributes): object
+    {
+        try {
+            return Shipment::query()->create($attributes)->load(['order', 'method', 'events']);
+        } catch (QueryException $exception) {
+            $existing = $this->findByIdempotencyKey((string) $attributes['idempotency_key']);
+            if ($existing !== null) return $existing;
+            throw $exception;
+        }
+    }
     public function updateStatus(object $shipment, string $status, ?int $actorId, ?string $note = null): object
     {
         return DB::transaction(function () use ($shipment, $status, $actorId, $note): Shipment {

@@ -2,6 +2,8 @@
 
 namespace App\Modules\Payment\Domain\Contracts;
 
+use App\Modules\Payment\Domain\ValueObjects\PaymentClaim;
+
 interface PaymentRepositoryInterface
 {
     public function find(int $paymentId): object;
@@ -17,6 +19,10 @@ interface PaymentRepositoryInterface
     public function listForOrderAsAdmin(int $orderId): iterable;
 
     public function create(array $attributes): object;
+
+    public function start(array $attributes): object;
+
+    public function claim(string $idempotencyKey, array $attributes): PaymentClaim;
 
     public function updateStatus(object $payment, string $status, array $attributes = []): object;
 }

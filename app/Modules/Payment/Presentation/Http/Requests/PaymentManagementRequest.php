@@ -18,6 +18,7 @@ final class PaymentManagementRequest extends FormRequest
             'payments.refund' => 'payments.refund',
             default => 'payments.view',
         };
+
         return $this->authorizePermission($permission);
     }
 

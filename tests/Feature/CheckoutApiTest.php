@@ -5,10 +5,8 @@ namespace Tests\Feature;
 use App\Models\CustomerAddress;
 use App\Models\CustomerCart;
 use App\Models\InventoryItem;
-use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Role;
-use App\Models\Shipment;
 use App\Models\ShippingMethod;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
@@ -22,7 +20,7 @@ final class CheckoutApiTest extends TestCase
     public function test_customer_can_checkout_using_server_side_price_and_snapshot(): void
     {
         $this->seed(RbacSeeder::class);
-        $user = User::factory()->create();
+        $user = $this->userWithRole('customer');
         $product = Product::query()->create([
             'name' => 'Checkout Product', 'slug' => 'checkout-product',
             'type' => 'simple', 'status' => 'active', 'price' => 1250,
@@ -53,7 +51,7 @@ final class CheckoutApiTest extends TestCase
     public function test_checkout_is_idempotent_for_the_same_key(): void
     {
         $this->seed(RbacSeeder::class);
-        $user = User::factory()->create();
+        $user = $this->userWithRole('customer');
         $product = Product::query()->create([
             'name' => 'Idempotent Product', 'slug' => 'idempotent-product',
             'type' => 'simple', 'status' => 'active', 'price' => 100,
@@ -78,7 +76,7 @@ final class CheckoutApiTest extends TestCase
     public function test_checkout_orchestrates_shipping_and_payment_after_reserving_inventory(): void
     {
         $this->seed(RbacSeeder::class);
-        $user = User::factory()->create();
+        $user = $this->userWithRole('customer');
         $product = Product::query()->create([
             'name' => 'Full Flow Product', 'slug' => 'full-flow-product',
             'type' => 'simple', 'status' => 'active', 'price' => 1250,
@@ -118,7 +116,7 @@ final class CheckoutApiTest extends TestCase
     public function test_checkout_rolls_back_order_and_inventory_when_shipping_creation_fails(): void
     {
         $this->seed(RbacSeeder::class);
-        $user = User::factory()->create();
+        $user = $this->userWithRole('customer');
         $product = Product::query()->create([
             'name' => 'Rollback Product', 'slug' => 'rollback-product',
             'type' => 'simple', 'status' => 'active', 'price' => 500,
@@ -143,5 +141,13 @@ final class CheckoutApiTest extends TestCase
         $this->assertDatabaseCount('shipments', 0);
         $this->assertDatabaseHas('inventory_items', ['product_id' => $product->id, 'on_hand' => 5, 'reserved' => 0]);
         $this->assertDatabaseCount('customer_cart_items', 1);
+    }
+
+    private function userWithRole(string $role): User
+    {
+        $user = User::factory()->create();
+        $user->roles()->attach(Role::query()->where('slug', $role)->firstOrFail());
+
+        return $user;
     }
 }

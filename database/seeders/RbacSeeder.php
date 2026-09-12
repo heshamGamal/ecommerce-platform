@@ -70,6 +70,7 @@ class RbacSeeder extends Seeder
             ['name' => 'View Customer Addresses', 'slug' => 'customer.addresses.view', 'group' => 'customer-profile'],
             ['name' => 'Manage Customer Addresses', 'slug' => 'customer.addresses.manage', 'group' => 'customer-profile'],
             ['name' => 'View Customer Orders', 'slug' => 'customer.orders.view', 'group' => 'customer-profile'],
+            ['name' => 'Manage Own Customer Orders', 'slug' => 'customer.orders.manage', 'group' => 'customer-profile'],
             ['name' => 'View Customer Cart', 'slug' => 'customer.cart.view', 'group' => 'customer-profile'],
             ['name' => 'Manage Customer Cart', 'slug' => 'customer.cart.manage', 'group' => 'customer-profile'],
             ['name' => 'View Customer Wishlist', 'slug' => 'customer.wishlist.view', 'group' => 'customer-profile'],
@@ -144,7 +145,7 @@ class RbacSeeder extends Seeder
         $allPermissions = Permission::query()->get();
         $customerProfilePermissions = $allPermissions->whereIn('slug', [
             'customer.profile.view', 'customer.profile.update', 'customer.addresses.view', 'customer.addresses.manage',
-            'customer.orders.view', 'customer.cart.view', 'customer.cart.manage', 'customer.wishlist.view', 'customer.wishlist.manage',
+            'customer.orders.view', 'customer.orders.manage', 'customer.cart.view', 'customer.cart.manage', 'customer.wishlist.view', 'customer.wishlist.manage',
             'customer.preferences.manage', 'customer.notifications.view',
         ]);
         $productManagerPermissions = $allPermissions->whereIn('slug', [

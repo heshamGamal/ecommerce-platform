@@ -2,18 +2,21 @@
 
 namespace App\Modules\Payment\Infrastructure\Gateways;
 
-use App\Models\CustomerOrder;
-use App\Models\Payment;
 use App\Modules\Payment\Domain\Contracts\PaymentGatewayInterface;
 use Illuminate\Support\Str;
 
 final class CashOnDeliveryGateway implements PaymentGatewayInterface
 {
+    public function supports(string $method): bool
+    {
+        return $method === 'cash_on_delivery';
+    }
+
     public function createPayment(object $order, string $idempotencyKey): array
     {
         return [
             'status' => 'pending',
-            'provider_reference' => 'cod-' . Str::uuid()->toString(),
+            'provider_reference' => 'cod-'.Str::uuid()->toString(),
             'metadata' => ['method' => 'cash_on_delivery', 'idempotency_key' => $idempotencyKey],
         ];
     }

@@ -12,11 +12,13 @@ final class ShippingRequest extends FormRequest
     public function authorize(): bool
     {
         $permission = match ($this->route()?->getName()) {
-            'customer.shipping-methods.index', 'customer.shipments.index', 'customer.shipments.store' => 'customer.orders.view',
+            'customer.shipping-methods.index', 'customer.shipments.index' => 'customer.orders.view',
+            'customer.shipments.store' => 'customer.orders.manage',
             'shipping-methods.index', 'shipping-methods.show' => 'shipping.view',
             'shipping-methods.store', 'shipping-methods.update', 'shipping-methods.destroy', 'shipments.status' => 'shipping.manage',
             default => 'shipping.view',
         };
+
         return $this->authorizePermission($permission);
     }
 
@@ -35,6 +37,7 @@ final class ShippingRequest extends FormRequest
         if ($this->route()?->getName() === 'shipments.status') {
             return ['status' => ['required', 'string', 'in:pending,picked_up,in_transit,out_for_delivery,delivered,cancelled'], 'note' => ['nullable', 'string', 'max:1000']];
         }
+
         return [];
     }
 }

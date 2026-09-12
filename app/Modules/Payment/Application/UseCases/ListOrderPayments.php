@@ -18,8 +18,11 @@ final class ListOrderPayments
     public function execute(int $orderId): iterable
     {
         $user = $this->authentication->user();
-        if ($user === null) throw new AuthenticationException('Unauthenticated.');
+        if ($user === null) {
+            throw new AuthenticationException('Unauthenticated.');
+        }
         $this->orders->findForUser($user->id, $orderId);
+
         return $this->payments->listForOrder($user->id, $orderId);
     }
 }

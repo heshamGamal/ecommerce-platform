@@ -11,7 +11,7 @@ final class CreatePaymentRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->authorizePermission('customer.orders.view');
+        return $this->authorizePermission('customer.orders.manage');
     }
 
     public function rules(): array
