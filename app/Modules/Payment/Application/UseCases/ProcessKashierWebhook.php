@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Modules\Payment\Application\UseCases;
+
+use App\Models\PaymentWebhookEvent;
+use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
+use App\Modules\Order\Domain\Contracts\TransactionManagerInterface;
+use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
+use App\Modules\Payment\Domain\Exceptions\PaymentException;
+use App\Modules\Payment\Infrastructure\Webhooks\KashierWebhookVerifier;
+use Illuminate\Database\QueryException;
+
+final class ProcessKashierWebhook
+{
+    public function __construct(
+        private readonly PaymentRepositoryInterface $payments,
+        private readonly OrderRepositoryInterface $orders,
+        private readonly TransactionManagerInterface $transactions,
+        private readonly KashierWebhookVerifier $verifier,
+    ) {
+    }
+
+    public function execute(array $payload): ?object
+    {
+        if (! $this->verifier->verify($payload)) {
+            throw new PaymentException('Invalid Kashier webhook signature.');
+        }
+
+        $eventId = (string) ($payload['transactionId'] ?? $payload['orderId'] ?? '');
+        $merchantOrderId = (string) ($payload['merchantOrderId'] ?? $payload['orderReference'] ?? '');
+        if ($eventId === '' || $merchantOrderId === '') {
+            throw new PaymentException('Kashier webhook is missing its payment reference.');
+        }
+
+        $payment = $this->payments->findByIdempotencyKey($merchantOrderId);
+        $payment ??= $this->payments->findByProviderReference((string) ($payload['orderId'] ?? ''));
+        if ($payment === null) {
+            throw new PaymentException('Kashier webhook does not match a local payment.');
+        }
+
+        try {
+            PaymentWebhookEvent::query()->create([
+                'provider' => 'kashier',
+                'event_id' => $eventId,
+                'event_type' => 'payment',
+                'status' => 'received',
+                'payment_reference' => (string) ($payload['orderId'] ?? $eventId),
+                'payload' => $payload,
+            ]);
+        } catch (QueryException $exception) {
+            if (PaymentWebhookEvent::query()->where('provider', 'kashier')->where('event_id', $eventId)->exists()) {
+                return null;
+            }
+            throw $exception;
+        }
+
+        $paid = strtoupper((string) ($payload['paymentStatus'] ?? '')) === 'SUCCESS';
+        $status = $paid ? 'paid' : 'failed';
+        $metadata = array_merge((array) $payment->metadata, [
+            'provider' => 'kashier',
+            'transaction_id' => $payload['transactionId'] ?? null,
+            'kashier_order_id' => $payload['orderId'] ?? null,
+            'webhook' => $payload,
+        ]);
+
+        return $this->transactions->run(function () use ($payment, $status, $metadata, $eventId): object {
+            $locked = $this->payments->findForUpdate((int) $payment->id);
+            $updated = $this->payments->updateStatus($locked, $status, ['metadata' => $metadata]);
+            if ($status === 'paid' && $updated->order->status === 'pending') {
+                $this->orders->updateStatus((int) $updated->order_id, 'confirmed');
+            }
+            PaymentWebhookEvent::query()->where('provider', 'kashier')->where('event_id', $eventId)->update([
+                'status' => 'processed',
+                'processed_at' => now(),
+            ]);
+            return $updated;
+        });
+    }
+}

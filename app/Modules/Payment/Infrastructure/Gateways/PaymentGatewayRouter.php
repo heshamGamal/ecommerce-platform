@@ -10,9 +10,9 @@ final class PaymentGatewayRouter implements PaymentGatewayInterface
     /** @var list<PaymentGatewayInterface> */
     private array $gateways;
 
-    public function __construct(CashOnDeliveryGateway $cashOnDelivery, PaymobGateway $paymob)
+    public function __construct(CashOnDeliveryGateway $cashOnDelivery, PaymobGateway $paymob, KashierGateway $kashier)
     {
-        $this->gateways = [$cashOnDelivery, $paymob];
+        $this->gateways = [$cashOnDelivery, $paymob, $kashier];
     }
 
     public function supports(string $method): bool

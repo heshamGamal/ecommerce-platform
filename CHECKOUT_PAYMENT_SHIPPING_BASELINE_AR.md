@@ -231,3 +231,54 @@ PAYMOB_REDIRECTION_URL=https://your-domain.example/payment/return
 [5]: https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac/hmac/hmac-transaction-callback "Paymob Transaction Callback HMAC"
 
 [6]: https://github.com/PaymobAccept/API-Postman-Collections "Paymob Official API Postman Collections"
+
+
+## تكامل Kashier المضاف
+
+تمت إضافة `KashierGateway` خلف نفس `PaymentGatewayRouter`، لذلك لا يتغير الـ Domain عند اختيار Kashier:
+
+```text
+CreatePayment
+    ↓
+PaymentGatewayRouter
+    ↓
+KashierGateway
+    ↓
+POST /v3/payment/sessions
+    ↓
+sessionUrl
+```
+
+استخدام Kashier يتم عبر `method=kashier`. يعيد الـ Gateway رابط `session_url` داخل metadata، ويجب تحويل العميل إليه. تم تنفيذ HMAC-SHA256 الخاص بإنشاء الجلسة باستخدام **Payment API Key**، كما تم تنفيذ Refund عبر `PUT /v3/orders/{orderId}` باستخدام **Secret Key**.
+
+تمت إضافة callback:
+
+```text
+POST /api/webhooks/kashier
+```
+
+ويتم التحقق من توقيع الاستجابة باستخدام ترتيب الحقول الثابت الموثق من Kashier، ثم تخزين الحدث في `payment_webhook_events` ومنع تكراره وتحديث Payment وOrder داخل transaction محلية.
+
+الإعدادات المطلوبة:
+
+```env
+KASHIER_ENABLED=true
+KASHIER_API_BASE_URL=https://test-api.kashier.io
+KASHIER_FEP_BASE_URL=https://test-fep.kashier.io
+KASHIER_CHECKOUT_BASE_URL=https://payments.kashier.io
+KASHIER_MERCHANT_ID=...
+KASHIER_SECRET_KEY=...
+KASHIER_PAYMENT_API_KEY=...
+KASHIER_WEBHOOK_URL=https://your-domain.example/api/webhooks/kashier
+KASHIER_REDIRECT_URL=https://your-domain.example/payment/return
+```
+
+عند الانتقال إلى الإنتاج يجب تغيير API host إلى `https://api.kashier.io` وFEP host إلى `https://fep.kashier.io`، واستبدال المفاتيح بمفاتيح Live. يجب إنشاء Webhook مستقل لوضع Live، والتأكد من أن Payment API Key المستخدم في التوقيع يخص نفس الوضع.
+
+[7]: https://developers.kashier.io/docs/api-reference/payment-sessions/createPaymentSession "Kashier Create Payment Session"
+
+[8]: https://developers.kashier.io/docs/direct-api/hashing "Kashier Request Hashing and Signatures"
+
+[9]: https://developers.kashier.io/docs/api-reference/order-operations/updateOrder "Kashier Refund Order Operation"
+
+[10]: https://developers.kashier.io/docs/get-started/going-live "Kashier Going Live Checklist"

@@ -25,4 +25,16 @@ return [
         'redirection_url' => env('PAYMOB_REDIRECTION_URL'),
         'timeout' => (int) env('PAYMOB_TIMEOUT', 15),
     ],
+    'kashier' => [
+        'enabled' => (bool) env('KASHIER_ENABLED', false),
+        'api_base_url' => env('KASHIER_API_BASE_URL', 'https://test-api.kashier.io'),
+        'fep_base_url' => env('KASHIER_FEP_BASE_URL', 'https://test-fep.kashier.io'),
+        'checkout_base_url' => env('KASHIER_CHECKOUT_BASE_URL', 'https://payments.kashier.io'),
+        'merchant_id' => env('KASHIER_MERCHANT_ID'),
+        'secret_key' => env('KASHIER_SECRET_KEY'),
+        'payment_api_key' => env('KASHIER_PAYMENT_API_KEY'),
+        'webhook_url' => env('KASHIER_WEBHOOK_URL'),
+        'redirect_url' => env('KASHIER_REDIRECT_URL'),
+        'timeout' => (int) env('KASHIER_TIMEOUT', 15),
+    ],
 ];
