@@ -2,8 +2,6 @@
 
 namespace App\Modules\Settings\Domain\ValueObjects;
 
-use App\Models\Setting;
-
 final readonly class SettingData
 {
     public function __construct(
@@ -22,7 +20,7 @@ final readonly class SettingData
         );
     }
 
-    public static function fromModel(Setting $setting): self
+    public static function fromModel(object $setting): self
     {
         return new self(
             $setting->group, $setting->key, $setting->getTypedValue(),

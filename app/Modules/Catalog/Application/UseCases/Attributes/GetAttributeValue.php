@@ -1,7 +1,6 @@
 <?php
 namespace App\Modules\Catalog\Application\UseCases\Attributes;
 
-use App\Models\AttributeValue;
 use App\Modules\Catalog\Domain\Contracts\AttributeRepositoryInterface;
 use App\Modules\Catalog\Domain\Contracts\AttributeValueRepositoryInterface;
 
@@ -12,7 +11,7 @@ final class GetAttributeValue
         private readonly AttributeValueRepositoryInterface $values,
     ) {}
 
-    public function execute(int $attributeId, int $valueId): AttributeValue
+    public function execute(int $attributeId, int $valueId): object
     {
         $this->attributes->findOrFail($attributeId);
 

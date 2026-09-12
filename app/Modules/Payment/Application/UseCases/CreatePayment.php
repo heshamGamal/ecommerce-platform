@@ -2,7 +2,6 @@
 
 namespace App\Modules\Payment\Application\UseCases;
 
-use App\Models\Payment;
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
@@ -21,7 +20,7 @@ final class CreatePayment
         private readonly PaymentGatewayInterface $gateway,
     ) {}
 
-    public function execute(int $orderId, PaymentData $data): Payment
+    public function execute(int $orderId, PaymentData $data): object
     {
         $user = $this->authentication->user();
         if ($user === null) throw new AuthenticationException('Unauthenticated.');

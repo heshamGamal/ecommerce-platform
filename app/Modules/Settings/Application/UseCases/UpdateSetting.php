@@ -2,7 +2,6 @@
 
 namespace App\Modules\Settings\Application\UseCases;
 
-use App\Models\Setting;
 use App\Modules\Settings\Domain\ValueObjects\SettingData;
 use App\Modules\Settings\Domain\Contracts\SettingsRepositoryInterface;
 
@@ -22,9 +21,9 @@ final class UpdateSetting
      * Execute the use case to create or update a setting.
      *
      * @param SettingData $data
-     * @return Setting
+     * @return object
      */
-    public function execute(SettingData $data): Setting
+    public function execute(SettingData $data): object
     {
         return $this->settings->save($data);
     }

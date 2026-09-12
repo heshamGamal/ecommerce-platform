@@ -2,7 +2,6 @@
 
 namespace App\Modules\Staff\Application\UseCases;
 
-use App\Models\User;
 use App\Modules\Staff\Domain\Contracts\StaffRepositoryInterface;
 
 final class GetStaff
@@ -11,7 +10,7 @@ final class GetStaff
     {
     }
 
-    public function execute(int $id): User
+    public function execute(int $id): object
     {
         return $this->staff->find($id);
     }

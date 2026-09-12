@@ -2,7 +2,6 @@
 
 namespace App\Modules\Auth\Application\UseCases;
 
-use App\Models\User;
 use App\Modules\Auth\Domain\ValueObjects\ChangePasswordData;
 use App\Modules\Auth\Domain\Contracts\PasswordServiceInterface;
 use App\Modules\Auth\Domain\Contracts\UserRepositoryInterface;
@@ -16,7 +15,7 @@ final class ChangePassword
     ) {
     }
 
-    public function execute(User $user, ChangePasswordData $data): User
+    public function execute(object $user, ChangePasswordData $data): object
     {
         if (!$this->passwords->check($data->currentPassword, $user->password)) {
             throw new AuthenticationException('The current password is invalid.');

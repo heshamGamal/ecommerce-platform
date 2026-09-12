@@ -2,7 +2,6 @@
 
 namespace App\Modules\Auth\Application\UseCases;
 
-use App\Models\User;
 use App\Modules\Auth\Domain\ValueObjects\RegisterUserData;
 use App\Modules\Auth\Domain\Contracts\UserRepositoryInterface;
 
@@ -12,7 +11,7 @@ final class RegisterUser
     {
     }
 
-    public function execute(RegisterUserData $data): User
+    public function execute(RegisterUserData $data): object
     {
         return $this->users->create($data);
     }

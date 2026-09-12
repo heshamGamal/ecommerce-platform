@@ -2,7 +2,6 @@
 
 namespace App\Modules\Customer\Application\UseCases;
 
-use App\Models\User;
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Customer\Domain\Exceptions\CustomerNotFoundException;
@@ -16,7 +15,7 @@ final class GetCustomerProfile
     ) {
     }
 
-    public function execute(): User
+    public function execute(): object
     {
         $user = $this->authentication->user();
 

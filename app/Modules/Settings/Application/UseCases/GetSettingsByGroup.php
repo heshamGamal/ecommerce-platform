@@ -2,7 +2,6 @@
 
 namespace App\Modules\Settings\Application\UseCases;
 
-use App\Models\Setting;
 use App\Modules\Settings\Domain\Contracts\SettingsRepositoryInterface;
 use Illuminate\Support\Collection;
 

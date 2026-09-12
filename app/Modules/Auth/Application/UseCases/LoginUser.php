@@ -2,7 +2,6 @@
 
 namespace App\Modules\Auth\Application\UseCases;
 
-use App\Models\User;
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 
@@ -12,7 +11,7 @@ final class LoginUser
     {
     }
 
-    public function execute(string $identifier, string $password, bool $remember = false): User
+    public function execute(string $identifier, string $password, bool $remember = false): object
     {
         $user = $this->authentication->attempt($identifier, $password, $remember);
 

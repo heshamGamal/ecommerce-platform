@@ -1,6 +1,5 @@
 <?php
 namespace App\Modules\Catalog\Application\UseCases\Products;
-use App\Models\ProductVariant;
 use App\Modules\Catalog\Domain\ValueObjects\ProductVariantData;
 use App\Modules\Catalog\Domain\Contracts\AttributeValueRepositoryInterface;
 use App\Modules\Catalog\Domain\Contracts\ProductRepositoryInterface;
@@ -11,7 +10,7 @@ use Illuminate\Support\Collection;
 final class CreateProductVariant
 {
  public function __construct(private readonly ProductRepositoryInterface $products,private readonly AttributeValueRepositoryInterface $attributeValues) {}
- public function execute(int $productId,ProductVariantData $data): ProductVariant
+ public function execute(int $productId,ProductVariantData $data): object
  {
   $product=$this->products->findOrFail($productId);
   if($product->type!=='variable') throw InvalidProductTypeException::variantNotAllowed();

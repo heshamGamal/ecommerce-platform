@@ -27,7 +27,7 @@ final class EloquentStaffRepository implements StaffRepositoryInterface
         return $user->load('roles');
     }
 
-    public function update(User $staff, StaffData $data): User
+    public function update(object $staff, StaffData $data): User
     {
         $staff->update([
             'name' => $data->name, 'email' => $data->email, 'phone' => $data->phone, 'status' => $data->status,
@@ -39,7 +39,7 @@ final class EloquentStaffRepository implements StaffRepositoryInterface
         return $staff->fresh()->load('roles');
     }
 
-    public function delete(User $staff): void
+    public function delete(object $staff): void
     {
         if (! $staff->exists) throw new StaffNotFoundException('Staff user not found.');
         $staff->delete();
@@ -57,7 +57,7 @@ final class EloquentStaffRepository implements StaffRepositoryInterface
         return User::query()->where('status', 'active')->whereHas('roles', fn ($query) => $query->where('slug', 'owner')->where('is_active', true))->count();
     }
 
-    private function syncRoles(User $user, array $slugs): void
+    private function syncRoles(object $user, array $slugs): void
     {
         $roles = Role::query()->whereIn('slug', $slugs)->get();
         if ($roles->contains(fn (Role $role): bool => ! $role->is_active)) {

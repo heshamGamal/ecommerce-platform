@@ -2,7 +2,6 @@
 
 namespace App\Modules\Shipping\Application\UseCases;
 
-use App\Models\Shipment;
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
@@ -22,7 +21,7 @@ final class CreateShipment
         private readonly ShipmentRepositoryInterface $shipments,
     ) {}
 
-    public function execute(int $orderId, CreateShipmentData $data): Shipment
+    public function execute(int $orderId, CreateShipmentData $data): object
     {
         $user = $this->authentication->user();
         if ($user === null) throw new AuthenticationException('Unauthenticated.');

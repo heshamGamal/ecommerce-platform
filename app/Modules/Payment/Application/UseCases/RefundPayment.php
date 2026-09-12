@@ -2,7 +2,6 @@
 
 namespace App\Modules\Payment\Application\UseCases;
 
-use App\Models\Payment;
 use App\Modules\Payment\Domain\Contracts\PaymentGatewayInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\InvalidPaymentTransitionException;
@@ -14,7 +13,7 @@ final class RefundPayment
         private readonly PaymentGatewayInterface $gateway,
     ) {}
 
-    public function execute(int $paymentId): Payment
+    public function execute(int $paymentId): object
     {
         $payment = $this->payments->find($paymentId);
         if ($payment->status !== 'paid') throw InvalidPaymentTransitionException::from($payment->status, 'refunded');

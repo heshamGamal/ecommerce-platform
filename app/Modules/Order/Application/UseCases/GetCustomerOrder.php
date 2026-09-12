@@ -2,7 +2,6 @@
 
 namespace App\Modules\Order\Application\UseCases;
 
-use App\Models\CustomerOrder;
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
@@ -14,7 +13,7 @@ final class GetCustomerOrder
         private readonly OrderRepositoryInterface $orders,
     ) {}
 
-    public function execute(int $orderId): CustomerOrder
+    public function execute(int $orderId): object
     {
         $user = $this->authentication->user();
         if ($user === null) {

@@ -2,7 +2,6 @@
 
 namespace App\Modules\Customer\Application\UseCases;
 
-use App\Models\CustomerAddress;
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Customer\Domain\Contracts\AddressRepositoryInterface;
@@ -12,7 +11,7 @@ final class GetDefaultCustomerAddress
 {
     public function __construct(private readonly AuthenticationServiceInterface $auth, private readonly AddressRepositoryInterface $addresses) {}
 
-    public function execute(): CustomerAddress
+    public function execute(): object
     {
         $user = $this->auth->user();
         if (!$user) throw new AuthenticationException('Unauthenticated.');

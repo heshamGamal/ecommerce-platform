@@ -4,6 +4,8 @@ namespace App\Modules\Customer\Infrastructure\Persistence;
 
 use App\Models\CustomerNotification;
 use App\Modules\Customer\Domain\Contracts\CustomerNotificationRepositoryInterface;
+use App\Modules\Customer\Domain\Exceptions\CustomerFeatureNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 final class EloquentCustomerNotificationRepository implements CustomerNotificationRepositoryInterface
 {
@@ -14,7 +16,11 @@ final class EloquentCustomerNotificationRepository implements CustomerNotificati
 
     public function markAsRead(int $userId, int $notificationId): object
     {
-        $notification = CustomerNotification::query()->where('user_id', $userId)->findOrFail($notificationId);
+        try {
+            $notification = CustomerNotification::query()->where('user_id', $userId)->findOrFail($notificationId);
+        } catch (ModelNotFoundException) {
+            throw new CustomerFeatureNotFoundException('Notification', $notificationId);
+        }
         $notification->update(['read_at' => now()]);
 
         return $notification->fresh();

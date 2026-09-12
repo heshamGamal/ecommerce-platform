@@ -12,7 +12,7 @@ final class EloquentCustomerRepository implements CustomerRepositoryInterface
         return User::query()->find($id);
     }
 
-    public function update(User $customer, string $name, ?string $email, ?string $phone): User
+    public function update(object $customer, string $name, ?string $email, ?string $phone): User
     {
         $customer->forceFill([
             'name' => $name,

@@ -6,8 +6,6 @@ use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Order\Domain\ValueObjects\CheckoutData;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
-use App\Models\CustomerOrder;
-
 final class Checkout
 {
     public function __construct(
@@ -15,7 +13,7 @@ final class Checkout
         private readonly OrderRepositoryInterface $orders,
     ) {}
 
-    public function execute(CheckoutData $data): CustomerOrder
+    public function execute(CheckoutData $data): object
     {
         $user = $this->authentication->user();
         if ($user === null) {

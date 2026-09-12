@@ -10,11 +10,11 @@ use App\Modules\Auth\Application\UseCases\GetCurrentUser;
 use App\Modules\Auth\Application\UseCases\LoginUser;
 use App\Modules\Auth\Application\UseCases\LogoutUser;
 use App\Modules\Auth\Application\UseCases\RegisterUser;
+use App\Modules\Auth\Presentation\Http\Requests\AuthRequest;
 use App\Modules\Auth\Presentation\Http\Requests\ChangePasswordRequest;
 use App\Modules\Auth\Presentation\Http\Requests\LoginRequest;
 use App\Modules\Auth\Presentation\Http\Requests\RegisterRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
@@ -23,7 +23,7 @@ class AuthController extends Controller
         $user = $useCase->execute(RegisterUserData::fromArray($request->validated()));
         $login->execute($request->validated('email') ?? $request->validated('phone'), $request->validated('password'));
 
-        return response()->json(['data' => $user->fresh()], 201);
+        return response()->json(['data' => $user], 201);
     }
 
     public function login(LoginRequest $request, LoginUser $useCase): JsonResponse
@@ -37,12 +37,12 @@ class AuthController extends Controller
         return response()->json(['data' => $user]);
     }
 
-    public function me(GetCurrentUser $useCase): JsonResponse
+    public function me(AuthRequest $request, GetCurrentUser $useCase): JsonResponse
     {
         return response()->json(['data' => $useCase->execute()]);
     }
 
-    public function logout(LogoutUser $useCase): JsonResponse
+    public function logout(AuthRequest $request, LogoutUser $useCase): JsonResponse
     {
         $useCase->execute();
 

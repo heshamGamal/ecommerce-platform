@@ -2,7 +2,6 @@
 
 namespace App\Modules\Customer\Application\UseCases;
 
-use App\Models\User;
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Customer\Domain\ValueObjects\UpdateCustomerData;
@@ -17,7 +16,7 @@ final class UpdateCustomerProfile
     ) {
     }
 
-    public function execute(UpdateCustomerData $data): User
+    public function execute(UpdateCustomerData $data): object
     {
         $user = $this->authentication->user();
 

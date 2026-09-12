@@ -80,13 +80,13 @@ final class EloquentCartRepository implements CartRepositoryInterface
         if ($inventory !== null && $inventory->on_hand - $inventory->reserved < $quantity) throw new CartItemOutOfStockException("Insufficient stock for [{$name}].");
     }
 
-    private function touch(CustomerCart $cart): CustomerCart
+    private function touch(object $cart): CustomerCart
     {
         $cart->update(['last_activity_at' => now(), 'abandoned_at' => null, 'recovered_at' => now(), 'recovery_reminder_count' => 0]);
         return $this->withTotals($cart->fresh(['items.product', 'items.variant']));
     }
 
-    private function withTotals(CustomerCart $cart): CustomerCart
+    private function withTotals(object $cart): CustomerCart
     {
         return $cart;
     }

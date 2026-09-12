@@ -84,7 +84,7 @@ class EloquentProductRepository implements ProductRepositoryInterface
     {
         return $values->mapWithKeys(fn ($value) => [$value->id => ['attribute_id' => $value->attribute_id]])->all();
     }
-    private function throwVariantConflict(Product $product, string $sku, string $hash, ?int $exceptId = null): void
+    private function throwVariantConflict(object $product, string $sku, string $hash, ?int $exceptId = null): void
     {
         if ($this->skuExists($sku, $exceptId)) throw new DuplicateSkuException($sku);
         if ($this->combinationExists($product, $hash, $exceptId)) throw InvalidVariantCombinationException::duplicate();
