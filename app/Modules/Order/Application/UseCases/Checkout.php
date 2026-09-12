@@ -28,7 +28,10 @@ final class Checkout
             throw new AuthenticationException('Unauthenticated.');
         }
 
-        return $this->transactions->run(function () use ($data, $user): object {
+        // Keep only local order, inventory, and shipment state in this
+        // transaction. A remote gateway call must never run under it: a
+        // database rollback cannot undo a successful external charge.
+        $order = $this->transactions->run(function () use ($data, $user): object {
             $order = $this->orders->checkout(
                 $user->id,
                 $data->addressId,
@@ -46,16 +49,18 @@ final class Checkout
                 }
             }
 
-            if ($data->paymentMethod !== null) {
-                $this->createPayment->execute($order->id, new PaymentData(
-                    method: $data->paymentMethod,
-                    currency: $order->currency,
-                    idempotencyKey: $data->paymentIdempotencyKey ?? $data->idempotencyKey ?? ('payment-' . $order->id),
-                    amount: $order->total_amount,
-                ));
-            }
-
-            return $this->orders->findForUser($user->id, $order->id);
+            return $order;
         });
+
+        if ($data->paymentMethod !== null) {
+            $this->createPayment->execute($order->id, new PaymentData(
+                method: $data->paymentMethod,
+                currency: $order->currency,
+                idempotencyKey: $data->paymentIdempotencyKey ?? $data->idempotencyKey ?? ('payment-' . $order->id),
+                amount: $order->total_amount,
+            ));
+        }
+
+        return $this->orders->findForUser($user->id, $order->id);
     }
 }

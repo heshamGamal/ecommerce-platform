@@ -10,6 +10,7 @@ use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
 use App\Modules\Payment\Domain\Exceptions\PaymentFailedException;
+use App\Modules\Payment\Domain\Exceptions\PaymentInProgressException;
 use App\Modules\Payment\Domain\ValueObjects\PaymentData;
 
 final class CreatePayment
@@ -48,11 +49,13 @@ final class CreatePayment
             'metadata' => ['idempotency_key' => $data->idempotencyKey],
         ]);
         if (! $claim->acquired) {
-            if ($claim->payment->order_id !== $order->id) {
+            if ($claim->payment->order_id !== $order->id || $claim->payment->user_id !== $user->id) {
                 throw new PaymentException('Idempotency key belongs to another order.');
             }
-
-            return $claim->payment;
+            if (in_array($claim->payment->status, ['pending', 'paid', 'refunded', 'failed'], true)) {
+                return $claim->payment;
+            }
+            throw new PaymentInProgressException('Payment is already being initiated. Retry with the same idempotency key.');
         }
 
         try {
@@ -62,7 +65,10 @@ final class CreatePayment
             }
         } catch (\Throwable $exception) {
             $this->payments->updateStatus($claim->payment, 'failed', [
-                'metadata' => ['failure' => $exception->getMessage()],
+                'metadata' => [
+                    'failure' => $exception->getMessage(),
+                    'reconciliation_required' => true,
+                ],
             ]);
             throw $exception;
         }

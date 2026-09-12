@@ -28,6 +28,7 @@ use App\Modules\Payment\Domain\Exceptions\PaymentFailedException;
 use App\Modules\Payment\Domain\Exceptions\PaymentNotFoundException;
 use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;
 use App\Modules\Payment\Domain\Exceptions\InvalidPaymentTransitionException;
+use App\Modules\Payment\Domain\Exceptions\PaymentInProgressException;
 use App\Modules\Shipping\Domain\Exceptions\InvalidShippingAddressException;
 use App\Modules\Shipping\Domain\Exceptions\ShippingException;
 use App\Modules\Shipping\Domain\Exceptions\ShippingRateNotFoundException;
@@ -56,7 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
   $exceptions->render(function(BusinessRuleException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],409);});
   $exceptions->render(function(InsufficientStockException|InvalidStockAdjustmentException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});
   $exceptions->render(function(CheckoutException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});
-  $exceptions->render(function(PaymentAlreadyProcessedException|InvalidPaymentTransitionException|InvalidOrderStatusTransitionException|InvalidShipmentTransitionException|OrderActionNotAllowedException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],409);});
+  $exceptions->render(function(PaymentAlreadyProcessedException|PaymentInProgressException|InvalidPaymentTransitionException|InvalidOrderStatusTransitionException|InvalidShipmentTransitionException|OrderActionNotAllowedException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],409);});
   $exceptions->render(function(PaymentAmountMismatchException|PaymentFailedException|InvalidShippingAddressException|ShippingException|CartException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});
   $exceptions->render(function(PaymentException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});
   $exceptions->render(function(PaymentNotFoundException|ShippingRateNotFoundException|ShipmentNotFoundException|OrderNotFoundException|ProductNotFoundException|VariantNotFoundException|AttributeNotFoundException|AttributeValueNotFoundException|BrandNotFoundException|CategoryNotFoundException|SettingsNotFoundException|CustomerNotFoundException|CustomerFeatureNotFoundException|AddressNotFoundException|StaffNotFoundException|InventoryNotFoundException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],404);});
