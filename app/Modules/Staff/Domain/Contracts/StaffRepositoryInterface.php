@@ -9,4 +9,5 @@ interface StaffRepositoryInterface
  public function update(User $staff,StaffData $data): User;
  public function delete(User $staff): void;
  public function find(int $id): User;
+ public function activeOwnerCount(): int;
 }

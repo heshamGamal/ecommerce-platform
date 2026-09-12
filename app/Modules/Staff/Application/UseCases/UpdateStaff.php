@@ -20,6 +20,9 @@ final class UpdateStaff
         }
 
         if ($staff->hasRole('owner')) {
+            if ($data->status === 'inactive' && $this->staff->activeOwnerCount() <= 1) {
+                throw new StaffActionNotAllowedException('The system must always have at least one active owner.');
+            }
             throw new StaffActionNotAllowedException('The owner account cannot be modified through Staff management.');
         }
 

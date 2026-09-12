@@ -75,7 +75,23 @@ final class StaffApiTest extends TestCase
         $owner = $this->userWithRole('owner');
         Role::query()->where('slug', 'support_agent')->update(['is_active' => false]);
         $payload = ['name' => 'Inactive Role Staff', 'email' => 'inactive-role@example.com', 'password' => 'password123', 'password_confirmation' => 'password123', 'roles' => ['support_agent']];
-        $this->actingAs($owner)->postJson('/api/staff', $payload)->assertForbidden();
+        $this->actingAs($owner)->postJson('/api/staff', $payload)->assertUnprocessable()->assertJsonValidationErrors(['roles.0']);
+    }
+
+    public function test_last_owner_cannot_be_deactivated_or_deleted(): void
+    {
+        $owner = $this->userWithRole('owner');
+        $this->actingAs($owner)->patchJson("/api/staff/{$owner->id}", ['name' => $owner->name, 'email' => $owner->email, 'status' => 'inactive'])->assertForbidden();
+        $this->actingAs($owner)->deleteJson("/api/staff/{$owner->id}")->assertForbidden();
+        $this->assertDatabaseHas('users', ['id' => $owner->id, 'status' => 'active']);
+    }
+
+    public function test_system_has_an_active_owner_after_staff_actions(): void
+    {
+        $owner = $this->userWithRole('owner');
+        $secondOwner = $this->userWithRole('owner');
+        $this->actingAs($owner)->deleteJson("/api/staff/{$secondOwner->id}")->assertForbidden();
+        $this->assertSame(2, User::query()->where('status', 'active')->whereHas('roles', fn ($query) => $query->where('slug', 'owner'))->count());
     }
 
     public function test_patch_validates_password_email_and_phone(): void

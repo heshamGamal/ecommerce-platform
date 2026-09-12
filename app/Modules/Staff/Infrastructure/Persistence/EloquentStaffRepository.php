@@ -52,6 +52,11 @@ final class EloquentStaffRepository implements StaffRepositoryInterface
         return $user;
     }
 
+    public function activeOwnerCount(): int
+    {
+        return User::query()->where('status', 'active')->whereHas('roles', fn ($query) => $query->where('slug', 'owner')->where('is_active', true))->count();
+    }
+
     private function syncRoles(User $user, array $slugs): void
     {
         $roles = Role::query()->whereIn('slug', $slugs)->get();
