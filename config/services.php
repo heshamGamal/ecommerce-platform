@@ -37,4 +37,13 @@ return [
         'redirect_url' => env('KASHIER_REDIRECT_URL'),
         'timeout' => (int) env('KASHIER_TIMEOUT', 15),
     ],
+    'bosta' => [
+        'enabled' => (bool) env('BOSTA_ENABLED', false),
+        'base_url' => env('BOSTA_BASE_URL', 'https://app.bosta.co'),
+        'api_key' => env('BOSTA_API_KEY'),
+        'webhook_url' => env('BOSTA_WEBHOOK_URL'),
+        'webhook_auth_header' => env('BOSTA_WEBHOOK_AUTH_HEADER', 'Authorization'),
+        'webhook_auth_value' => env('BOSTA_WEBHOOK_AUTH_VALUE'),
+        'timeout' => (int) env('BOSTA_TIMEOUT', 15),
+    ],
 ];

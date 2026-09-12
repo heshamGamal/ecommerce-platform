@@ -9,6 +9,7 @@ use App\Modules\Shipping\Domain\ValueObjects\CreateShipmentData;
 use App\Modules\Shipping\Domain\Contracts\ShippingMethodRepositoryInterface;
 use App\Modules\Shipping\Domain\Contracts\ShippingRateCalculatorInterface;
 use App\Modules\Shipping\Domain\Contracts\ShipmentRepositoryInterface;
+use App\Modules\Shipping\Domain\Contracts\ShippingProviderInterface;
 use App\Modules\Shipping\Domain\Exceptions\ShippingException;
 
 final class CreateShipment
@@ -19,6 +20,7 @@ final class CreateShipment
         private readonly ShippingMethodRepositoryInterface $methods,
         private readonly ShippingRateCalculatorInterface $rates,
         private readonly ShipmentRepositoryInterface $shipments,
+        private readonly ShippingProviderInterface $providers,
     ) {}
 
     public function execute(int $orderId, CreateShipmentData $data): object
@@ -32,10 +34,10 @@ final class CreateShipment
         $existing = $this->shipments->findByIdempotencyKey($data->idempotencyKey);
         if ($existing !== null) {
             if ($existing->order_id !== $order->id) throw new ShippingException('Idempotency key belongs to another order.');
-            return $existing;
+            return $this->dispatchIfNeeded($existing);
         }
         $fee = $this->rates->calculate($order, $method);
-        return $this->shipments->create([
+        $shipment = $this->shipments->create([
             'order_id' => $order->id,
             'user_id' => $user->id,
             'shipping_method_id' => $method->id,
@@ -47,5 +49,14 @@ final class CreateShipment
             'idempotency_key' => $data->idempotencyKey,
             'metadata' => ['carrier' => $method->carrier],
         ]);
+        return $this->dispatchIfNeeded($shipment);
+    }
+
+    private function dispatchIfNeeded(object $shipment): object
+    {
+        if (! $this->providers->supports($shipment) || data_get($shipment->metadata, 'provider_reference')) {
+            return $shipment;
+        }
+        return $this->shipments->updateProviderData($shipment, $this->providers->create($shipment));
     }
 }

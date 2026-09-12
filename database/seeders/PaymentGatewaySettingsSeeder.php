@@ -27,6 +27,14 @@ final class PaymentGatewaySettingsSeeder extends Seeder
             ['payment_gateways.kashier.payment_api_key', null, 'string', true, 'Kashier Payment API Key.'],
             ['payment_gateways.kashier.webhook_url', null, 'string', false, 'Kashier webhook URL.'],
             ['payment_gateways.kashier.redirect_url', null, 'string', false, 'Kashier browser return URL.'],
+            ['shipping_providers.bosta.enabled', false, 'boolean', false, 'Enable Bosta for shipping dispatch.'],
+            ['shipping_providers.bosta.base_url', 'https://app.bosta.co', 'string', false, 'Bosta API base URL.'],
+            ['shipping_providers.bosta.api_key', null, 'string', true, 'Bosta API key.'],
+            ['shipping_providers.bosta.webhook_url', null, 'string', false, 'Bosta webhook URL.'],
+            ['shipping_providers.bosta.webhook_auth_header', 'Authorization', 'string', false, 'Bosta webhook custom header name.'],
+            ['shipping_providers.bosta.webhook_auth_value', null, 'string', true, 'Bosta webhook custom header value.'],
+            ['shipping_providers.bosta.delivery_type', 10, 'integer', false, 'Bosta delivery order type.'],
+            ['shipping_providers.bosta.package_type', 'Small', 'string', false, 'Bosta package type.'],
         ];
 
         foreach ($settings as [$key, $value, $type, $secret, $description]) {
@@ -34,7 +42,7 @@ final class PaymentGatewaySettingsSeeder extends Seeder
             $wasExisting = $setting->exists;
             $wasEncrypted = (bool) ($setting->is_encrypted ?? false);
             $currentValue = $wasExisting ? $setting->getTypedValue() : $value;
-            $setting->group = str_starts_with($key, 'payment_gateways.') ? 'payment_gateways' : 'payments';
+            $setting->group = str_starts_with($key, 'payment_gateways.') ? 'payment_gateways' : (str_starts_with($key, 'shipping_providers.') ? 'shipping_providers' : 'payments');
             $setting->type = $type;
             $setting->description = $description;
             $setting->is_secret = $secret;

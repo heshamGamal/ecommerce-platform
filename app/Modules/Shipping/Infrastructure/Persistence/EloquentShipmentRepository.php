@@ -25,6 +25,13 @@ final class EloquentShipmentRepository implements ShipmentRepositoryInterface
         return $shipment;
     }
     public function findByIdempotencyKey(string $key): ?object { return Shipment::query()->with(['order', 'method'])->where('idempotency_key', $key)->first(); }
+    public function findByProviderReference(string $reference): ?object
+    {
+        return Shipment::query()->with(['order', 'method', 'events'])
+            ->where('tracking_number', $reference)
+            ->orWhereJsonContains('metadata->bosta_delivery_id', $reference)
+            ->first();
+    }
     public function listForUserOrder(int $userId, int $orderId): iterable { return Shipment::query()->with(['method', 'events'])->where('user_id', $userId)->where('order_id', $orderId)->latest()->get(); }
     public function create(array $attributes): object
     {
@@ -35,6 +42,26 @@ final class EloquentShipmentRepository implements ShipmentRepositoryInterface
             if ($existing !== null) return $existing;
             throw $exception;
         }
+    }
+    public function updateProviderData(object $shipment, array $data): object
+    {
+        $shipment->update([
+            'tracking_number' => $data['tracking_number'] ?? $shipment->tracking_number,
+            'metadata' => array_merge((array) $shipment->metadata, (array) ($data['metadata'] ?? [])),
+        ]);
+        return $shipment->fresh(['order', 'method', 'events']);
+    }
+    public function updateProviderStatus(object $shipment, string $status, ?string $note = null): object
+    {
+        return DB::transaction(function () use ($shipment, $status, $note): Shipment {
+            $locked = Shipment::query()->lockForUpdate()->find($shipment->id);
+            if ($locked === null) throw new ShipmentNotFoundException('Shipment not found.');
+            if ($locked->status === $status) return $locked->fresh(['order', 'method', 'events']);
+            $from = $locked->status;
+            $locked->update(['status' => $status]);
+            ShipmentEvent::query()->create(['shipment_id' => $locked->id, 'from_status' => $from, 'to_status' => $status, 'note' => $note]);
+            return $locked->fresh(['order', 'method', 'events']);
+        });
     }
     public function updateStatus(object $shipment, string $status, ?int $actorId, ?string $note = null): object
     {

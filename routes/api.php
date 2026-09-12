@@ -15,12 +15,14 @@ use App\Modules\Payment\Presentation\Http\Controllers\PaymentController;
 use App\Modules\Payment\Presentation\Http\Controllers\PaymobWebhookController;
 use App\Modules\Payment\Presentation\Http\Controllers\KashierWebhookController;
 use App\Modules\Shipping\Presentation\Http\Controllers\ShippingController;
+use App\Modules\Shipping\Presentation\Http\Controllers\BostaWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('auth/register', [AuthController::class, 'register'])->middleware('guest')->name('auth.register');
 Route::post('auth/login', [AuthController::class, 'login'])->middleware(['guest', 'throttle:auth-login'])->name('auth.login');
 Route::post('webhooks/paymob', PaymobWebhookController::class)->name('webhooks.paymob');
 Route::post('webhooks/kashier', KashierWebhookController::class)->name('webhooks.kashier');
+Route::post('webhooks/bosta', BostaWebhookController::class)->name('webhooks.bosta');
 Route::middleware('auth')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
     Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');

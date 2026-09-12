@@ -5,9 +5,11 @@ namespace App\Modules\Shipping;
 use App\Modules\Shipping\Domain\Contracts\ShippingMethodRepositoryInterface;
 use App\Modules\Shipping\Domain\Contracts\ShippingRateCalculatorInterface;
 use App\Modules\Shipping\Domain\Contracts\ShipmentRepositoryInterface;
+use App\Modules\Shipping\Domain\Contracts\ShippingProviderInterface;
 use App\Modules\Shipping\Infrastructure\Persistence\DatabaseShippingRateCalculator;
 use App\Modules\Shipping\Infrastructure\Persistence\EloquentShippingMethodRepository;
 use App\Modules\Shipping\Infrastructure\Persistence\EloquentShipmentRepository;
+use App\Modules\Shipping\Infrastructure\Providers\ShippingProviderRouter;
 use Illuminate\Support\ServiceProvider;
 
 final class ShippingServiceProvider extends ServiceProvider
@@ -16,5 +18,6 @@ final class ShippingServiceProvider extends ServiceProvider
         ShippingMethodRepositoryInterface::class => EloquentShippingMethodRepository::class,
         ShippingRateCalculatorInterface::class => DatabaseShippingRateCalculator::class,
         ShipmentRepositoryInterface::class => EloquentShipmentRepository::class,
+        ShippingProviderInterface::class => ShippingProviderRouter::class,
     ];
 }

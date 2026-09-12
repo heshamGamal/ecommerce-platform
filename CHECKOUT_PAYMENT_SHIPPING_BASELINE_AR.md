@@ -327,3 +327,64 @@ PUT /api/settings/payment_gateways.kashier.enabled
 | API response | Masking بالقيمة `********` |
 
 يتطلب ذلك وجود `APP_KEY` ثابت وسري. تغييره يجعل القيم المشفرة القديمة غير قابلة للفك، لذلك يجب تدوير المفاتيح عبر خطة migration مخصصة وليس بتغييرها مباشرة.
+
+
+## قاعدة شركات الشحن وإضافة Bosta
+
+تم إنشاء عقد عام لشركات الشحن:
+
+```text
+ShippingProviderInterface
+    ├── create
+    ├── track
+    ├── cancel
+    └── supports
+```
+
+ويستخدم النظام `ShippingProviderRouter` لاختيار الـ Adapter حسب `shipping_method.carrier`، لذلك يبقى الـ Domain غير مرتبط بـ Bosta أو أي شركة لاحقة.
+
+تمت إضافة `BostaShippingProvider` لتنفيذ:
+
+- إنشاء Delivery عبر `POST /api/v2/deliveries?apiVersion=1`.
+- إرسال بيانات المستلم والعنوان والـ COD وبيانات الطرد.
+- حفظ Bosta delivery ID ورقم التتبع محليًا.
+- التتبع عبر `POST /api/v2/deliveries/search`.
+- الإلغاء عبر terminate endpoint.
+- إعادة المحاولة بأمان باستخدام `idempotency_key` المحلي و`provider_reference`.
+
+تمت إضافة Webhook:
+
+```text
+POST /api/webhooks/bosta
+```
+
+ويتم حمايته عبر Custom Header وقيمة سرية قابلة للتعديل من Settings، ثم تحويل حالات Bosta إلى الحالات المحلية (`picked_up`, `in_transit`, `out_for_delivery`, `delivered`, `cancelled`).
+
+إعدادات Bosta موجودة في مجموعة:
+
+```text
+shipping_providers
+```
+
+وأهمها:
+
+```text
+shipping_providers.bosta.enabled
+shipping_providers.bosta.api_key
+shipping_providers.bosta.base_url
+shipping_providers.bosta.webhook_url
+shipping_providers.bosta.webhook_auth_header
+shipping_providers.bosta.webhook_auth_value
+shipping_providers.bosta.delivery_type
+shipping_providers.bosta.package_type
+```
+
+يجب إنشاء Shipping Method بقيمة `carrier=bosta`، ثم تفعيل `shipping_providers.bosta.enabled`. مفاتيح API وWebhook السرية مشفرة في قاعدة البيانات عند استخدام Seeder والإعدادات الجديدة.
+
+المراجع:
+
+[11]: https://docs.bosta.co/docs/how-to/create-your-first-delivery/ "Bosta Create Delivery"
+
+[12]: https://docs.bosta.co/docs/how-to/get-your-api-key/ "Bosta API Key"
+
+[13]: https://docs.bosta.co/docs/how-to/get-delivery-status-via-webhook/ "Bosta Delivery Status Webhook"
