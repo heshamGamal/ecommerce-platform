@@ -24,7 +24,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         return CustomerOrder::query()->with(['user', 'items.product'])->latest()->get();
     }
 
-    public function findForUser(int $userId, int $orderId): CustomerOrder
+    public function findForUser(int $userId, int $orderId): object
     {
         $order = CustomerOrder::query()->with('items.product')->where('user_id', $userId)->find($orderId);
         if ($order === null) {
@@ -33,7 +33,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         return $order;
     }
 
-    public function find(int $orderId): CustomerOrder
+    public function find(int $orderId): object
     {
         $order = CustomerOrder::query()->with(['user', 'items.product'])->find($orderId);
         if ($order === null) {
@@ -42,9 +42,9 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         return $order;
     }
 
-    public function updateStatus(int $orderId, string $status): CustomerOrder
+    public function updateStatus(int $orderId, string $status): object
     {
-        return DB::transaction(function () use ($orderId, $status): CustomerOrder {
+        return DB::transaction(function () use ($orderId, $status): object {
             $order = CustomerOrder::query()->lockForUpdate()->find($orderId);
             if ($order === null) {
                 throw new OrderNotFoundException('Order not found.');
@@ -66,9 +66,9 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         });
     }
 
-    public function cancelForUser(int $userId, int $orderId): CustomerOrder
+    public function cancelForUser(int $userId, int $orderId): object
     {
-        return DB::transaction(function () use ($userId, $orderId): CustomerOrder {
+        return DB::transaction(function () use ($userId, $orderId): object {
             $order = CustomerOrder::query()->where('user_id', $userId)->lockForUpdate()->find($orderId);
             if ($order === null) {
                 throw new OrderNotFoundException('Order not found.');
@@ -87,9 +87,9 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         });
     }
 
-    public function checkout(int $userId, int $addressId, string $currency, ?string $idempotencyKey): CustomerOrder
+    public function checkout(int $userId, int $addressId, string $currency, ?string $idempotencyKey): object
     {
-        return DB::transaction(function () use ($userId, $addressId, $currency, $idempotencyKey): CustomerOrder {
+        return DB::transaction(function () use ($userId, $addressId, $currency, $idempotencyKey): object {
             if ($idempotencyKey !== null) {
                 $existing = CustomerOrder::query()->where('idempotency_key', $idempotencyKey)->first();
                 if ($existing !== null) return $existing->load('items');
