@@ -174,7 +174,7 @@ ProviderRequest → ProviderResponse → GatewayResult
 
 ## القيود الحالية
 
-لا توجد في بيئة التنفيذ PHP أو `vendor`، لذلك تعذر تشغيل PHPUnit وLaravel migrations في هذه الجلسة. يجب تشغيل `composer install` ثم `php artisan test` و`php artisan migrate:fresh --seed` في CI أو بيئة التطوير. كما أن Adapter لمزوّد مالي حقيقي لا يمكن إكماله بأمان قبل اختيار المزوّد وتزويد إعدادات sandbox وwebhook.
+لا توجد في بيئة التنفيذ PHP أو `vendor`، لذلك تعذر تشغيل PHPUnit وLaravel migrations في هذه الجلسة. يجب تشغيل `composer install` ثم `php artisan test` و`php artisan migrate:fresh --seed` في CI أو بيئة التطوير. تم تنفيذ Adapter Paymob وWebhook، لكن تفعيل الإنتاج يتطلب إدخال مفاتيح Sandbox الصحيحة، وتسجيل عنوان callback في لوحة Paymob، ثم اختبار العمليات الفعلية قبل التحويل إلى Production.
 
 ## References
 
@@ -183,3 +183,51 @@ ProviderRequest → ProviderResponse → GatewayResult
 [2]: https://docs.stripe.com/api/idempotent_requests "Stripe Idempotent Requests"
 
 [3]: https://martinfowler.com/articles/patterns-of-distributed-systems/saga.html "Saga Pattern"
+
+
+## تكامل Paymob المضاف
+
+تمت إضافة `PaymobGateway` خلف `PaymentGatewayInterface` باستخدام مسار Hosted Checkout الحديث الخاص بـ Paymob:
+
+```text
+CreatePayment
+    ↓
+PaymentGatewayRouter
+    ↓
+PaymobGateway
+    ↓
+POST /v1/intention/
+    ↓
+client_secret + unifiedcheckout URL
+```
+
+تمت إضافة endpoint عام:
+
+```text
+POST /api/webhooks/paymob
+```
+
+ويتحقق من HMAC-SHA512 قبل تحديث payment. كما تم دعم deduplication للحدث باستخدام `provider + event_id`، وربط callback أولًا بـ `merchant_order_id`، ثم بـ provider reference عند الحاجة.
+
+أضف الإعدادات التالية إلى `.env` باستخدام بيانات Sandbox من Paymob:
+
+```env
+PAYMOB_ENABLED=true
+PAYMOB_BASE_URL=https://accept.paymob.com
+PAYMOB_SECRET_KEY=...
+PAYMOB_PUBLIC_KEY=...
+PAYMOB_HMAC_SECRET=...
+PAYMOB_INTEGRATION_IDS=...
+PAYMOB_NOTIFICATION_URL=https://your-domain.example/api/webhooks/paymob
+PAYMOB_REDIRECTION_URL=https://your-domain.example/payment/return
+```
+
+مسار العميل هو إنشاء payment باستخدام `method=paymob`، ثم فتح `data.metadata.checkout_url`. لا يعتمد تأكيد النجاح على عودة المتصفح؛ الـ callback هو مصدر الحقيقة، بينما redirect يستخدم لتجربة المستخدم فقط.
+
+تم اعتماد واجهة Paymob الرسمية الحالية الخاصة بإنشاء Payment Intention، وواجهة Unified Checkout، وTransaction Callback/HMAC، وRefund endpoint. يجب اختبار أسماء الحقول وتفعيل webhook من لوحة Paymob في Sandbox قبل الإنتاج لأن إعدادات التكامل تختلف باختلاف البلد والحساب ونوع المنتج.
+
+[4]: https://developers.paymob.com/paymob-docs/intention-apis/create-intention "Paymob Create Intention API"
+
+[5]: https://developers.paymob.com/paymob-docs/developers/webhook-callbacks-and-hmac/hmac/hmac-transaction-callback "Paymob Transaction Callback HMAC"
+
+[6]: https://github.com/PaymobAccept/API-Postman-Collections "Paymob Official API Postman Collections"

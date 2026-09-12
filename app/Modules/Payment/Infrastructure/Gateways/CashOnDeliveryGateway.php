@@ -12,7 +12,7 @@ final class CashOnDeliveryGateway implements PaymentGatewayInterface
         return $method === 'cash_on_delivery';
     }
 
-    public function createPayment(object $order, string $idempotencyKey): array
+    public function createPayment(object $order, string $method, string $idempotencyKey): array
     {
         return [
             'status' => 'pending',

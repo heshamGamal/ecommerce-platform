@@ -17,7 +17,7 @@ final class CreatePaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'method' => ['required', 'string', 'in:cash_on_delivery'],
+            'method' => ['required', 'string', 'in:cash_on_delivery,paymob'],
             'currency' => ['required', 'string', 'size:3'],
             'amount' => ['nullable', 'integer', 'min:0'],
             'idempotency_key' => ['required', 'string', 'max:100'],

@@ -46,6 +46,11 @@ final class EloquentPaymentRepository implements PaymentRepositoryInterface
         return Payment::query()->with('order')->where('idempotency_key', $key)->first();
     }
 
+    public function findByProviderReference(string $reference): ?object
+    {
+        return Payment::query()->with('order')->where('provider_reference', $reference)->first();
+    }
+
     public function listForOrder(int $userId, int $orderId): iterable
     {
         return Payment::query()->where('user_id', $userId)->where('order_id', $orderId)->latest()->get();

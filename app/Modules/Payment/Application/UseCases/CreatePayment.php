@@ -59,7 +59,7 @@ final class CreatePayment
         }
 
         try {
-            $result = $this->gateway->createPayment($order, $data->idempotencyKey);
+            $result = $this->gateway->createPayment($order, $data->method, $data->idempotencyKey);
             if (($result['status'] ?? null) === 'failed') {
                 throw new PaymentFailedException('Payment creation failed.');
             }
