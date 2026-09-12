@@ -12,6 +12,7 @@ use App\Modules\Customer\Domain\Exceptions\CustomerNotFoundException;
 use App\Modules\Customer\Domain\Exceptions\CustomerFeatureNotFoundException;
 use App\Modules\Settings\Domain\Exceptions\SettingsNotFoundException;
 use App\Modules\Staff\Domain\Exceptions\StaffNotFoundException;
+use App\Modules\Staff\Domain\Exceptions\StaffActionNotAllowedException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -25,7 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
   $exceptions->shouldRenderJsonWhen(fn(Request $request)=>$request->is('api/*')||$request->expectsJson());
   $exceptions->render(function(AuthenticationException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>'Unauthenticated.'],401);});
   $exceptions->render(function(DomainAuthenticationException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],401);});
-  $exceptions->render(function(DomainAuthorizationException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],403);});
+  $exceptions->render(function(DomainAuthorizationException|StaffActionNotAllowedException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],403);});
   $exceptions->render(function(BusinessRuleException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],409);});
   $exceptions->render(function(ProductNotFoundException|VariantNotFoundException|AttributeNotFoundException|AttributeValueNotFoundException|BrandNotFoundException|CategoryNotFoundException|SettingsNotFoundException|CustomerNotFoundException|CustomerFeatureNotFoundException|StaffNotFoundException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],404);});
   $exceptions->render(function(HttpExceptionInterface $e,Request $r){if($r->is('api/*')&&$e->getStatusCode()===403)return response()->json(['message'=>'Forbidden.'],403);});
