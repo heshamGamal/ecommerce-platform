@@ -127,6 +127,49 @@ final class StaffApiTest extends TestCase
         $this->actingAs($owner)->patchJson("/api/staff/{$customer->id}", ['name' => 'No', 'email' => 'no@example.com'])->assertNotFound();
     }
 
+    public function test_inactive_staff_cannot_authenticate(): void
+    {
+        $staff = User::factory()->create(['email' => 'inactive-staff@example.com', 'status' => 'inactive']);
+        $this->postJson('/api/auth/login', ['identifier' => $staff->email, 'password' => 'password'])->assertUnauthorized();
+    }
+
+    public function test_deleted_staff_cannot_authenticate(): void
+    {
+        $staff = User::factory()->create(['email' => 'deleted-staff@example.com']);
+        $staff->delete();
+        $this->postJson('/api/auth/login', ['identifier' => 'deleted-staff@example.com', 'password' => 'password'])->assertUnauthorized();
+    }
+
+    public function test_explicit_empty_roles_removes_all_non_owner_roles(): void
+    {
+        $owner = $this->userWithRole('owner');
+        $staff = $this->userWithRole('manager');
+        $this->actingAs($owner)->patchJson("/api/staff/{$staff->id}", ['name' => $staff->name, 'email' => $staff->email, 'roles' => []])->assertOk()->assertJsonPath('data.roles', []);
+        $this->assertCount(0, $staff->fresh()->roles);
+    }
+
+    public function test_staff_password_can_be_updated_and_old_password_stops_working(): void
+    {
+        $owner = $this->userWithRole('owner');
+        $staff = $this->userWithRole('manager');
+        $this->actingAs($owner)->patchJson("/api/staff/{$staff->id}", ['name' => $staff->name, 'email' => $staff->email, 'password' => 'new-password123', 'password_confirmation' => 'new-password123'])->assertOk();
+        $this->postJson('/api/auth/logout')->assertOk();
+        $this->postJson('/api/auth/login', ['identifier' => $staff->email, 'password' => 'password'])->assertUnauthorized();
+        $this->postJson('/api/auth/login', ['identifier' => $staff->email, 'password' => 'new-password123'])->assertOk();
+    }
+
+    public function test_staff_mutations_are_audited(): void
+    {
+        $owner = $this->userWithRole('owner');
+        $response = $this->actingAs($owner)->postJson('/api/staff', ['name' => 'Audited Staff', 'email' => 'audited@example.com', 'password' => 'password123', 'password_confirmation' => 'password123', 'roles' => ['manager']])->assertCreated();
+        $id = $response->json('data.id');
+        $this->actingAs($owner)->patchJson("/api/staff/{$id}", ['name' => 'Audited Updated', 'email' => 'audited@example.com'])->assertOk();
+        $this->actingAs($owner)->deleteJson("/api/staff/{$id}")->assertOk();
+        $this->assertDatabaseHas('audit_logs', ['actor_id' => $owner->id, 'action' => 'staff.created', 'target_id' => $id]);
+        $this->assertDatabaseHas('audit_logs', ['actor_id' => $owner->id, 'action' => 'staff.updated', 'target_id' => $id]);
+        $this->assertDatabaseHas('audit_logs', ['actor_id' => $owner->id, 'action' => 'staff.deleted', 'target_id' => $id]);
+    }
+
     private function userWithRole(string $role): User
     {
         $user = User::factory()->create();

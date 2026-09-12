@@ -1,31 +1,4 @@
 <?php
-
 namespace App\Modules\Staff\Application\UseCases;
-
-use App\Models\User;
-use App\Modules\Staff\Application\DTOs\StaffData;
-use App\Modules\Staff\Domain\Contracts\StaffRepositoryInterface;
-use App\Modules\Staff\Domain\Exceptions\StaffActionNotAllowedException;
-
-final class UpdateStaff
-{
-    public function __construct(private readonly StaffRepositoryInterface $staff)
-    {
-    }
-
-    public function execute(User $staff, StaffData $data, User $actor): User
-    {
-        if ($staff->is($actor) && $data->status === 'inactive') {
-            throw new StaffActionNotAllowedException('A staff user cannot deactivate their own account.');
-        }
-
-        if ($staff->hasRole('owner')) {
-            if ($data->status === 'inactive' && $this->staff->activeOwnerCount() <= 1) {
-                throw new StaffActionNotAllowedException('The system must always have at least one active owner.');
-            }
-            throw new StaffActionNotAllowedException('The owner account cannot be modified through Staff management.');
-        }
-
-        return $this->staff->update($staff, $data);
-    }
-}
+use App\Models\User;use App\Modules\Staff\Application\DTOs\StaffData;use App\Modules\Staff\Domain\Contracts\AuditLogRepositoryInterface;use App\Modules\Staff\Domain\Contracts\StaffRepositoryInterface;use App\Modules\Staff\Domain\Exceptions\StaffActionNotAllowedException;
+final class UpdateStaff{public function __construct(private readonly StaffRepositoryInterface $staff,private readonly AuditLogRepositoryInterface $audit){}public function execute(User $target,StaffData $data,User $actor):User{if($target->is($actor)&&$data->status==='inactive')throw new StaffActionNotAllowedException('A staff user cannot deactivate their own account.');if($target->hasRole('owner')){if($data->status==='inactive'&&$this->staff->activeOwnerCount()<=1)throw new StaffActionNotAllowedException('The system must always have at least one active owner.');throw new StaffActionNotAllowedException('The owner account cannot be modified through Staff management.');}$updated=$this->staff->update($target,$data);$this->audit->record($actor,'staff.updated',User::class,$target->id,['roles'=>$data->rolesProvided?$data->roleSlugs:null,'status'=>$data->status]);return $updated;}}

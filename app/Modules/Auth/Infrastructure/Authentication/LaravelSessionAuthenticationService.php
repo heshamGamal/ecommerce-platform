@@ -55,6 +55,6 @@ final class LaravelSessionAuthenticationService implements AuthenticationService
         /** @var User|null $user */
         $user = $this->guard()->user();
 
-        return $user !== null && $user->isActive() ? $user : null;
+        return $user !== null && $user->exists && $user->isActive() ? $user : null;
     }
 }
