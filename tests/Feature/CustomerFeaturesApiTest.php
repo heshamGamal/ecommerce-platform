@@ -35,4 +35,17 @@ final class CustomerFeaturesApiTest extends TestCase {
   CustomerOrder::query()->create(['user_id'=>$this->customer->id,'status'=>'pending','total_amount'=>100]);$other=User::factory()->create();CustomerOrder::query()->create(['user_id'=>$other->id,'status'=>'pending','total_amount'=>200]);
   $this->actingAs($this->customer)->getJson('/api/customer/orders')->assertOk()->assertJsonCount(1,'data');
  }
+
+ public function test_address_default_is_unique_promoted_and_validated():void{
+  $first=$this->actingAs($this->customer)->postJson('/api/customer/addresses',['recipient_name'=>'First','phone'=>'010','address_line1'=>'One','city'=>'Cairo','country'=>'EG'])->assertCreated();
+  $firstId=$first->json('data.id');
+  $second=$this->actingAs($this->customer)->postJson('/api/customer/addresses',['recipient_name'=>'Second','phone'=>'011','address_line1'=>'Two','city'=>'Cairo','country'=>'EG'])->assertCreated();
+  $secondId=$second->json('data.id');
+  $this->assertDatabaseHas('customer_addresses',['id'=>$firstId,'is_default'=>1]);
+  $this->actingAs($this->customer)->patchJson("/api/customer/addresses/{$secondId}",['recipient_name'=>'Second','phone'=>'011','address_line1'=>'Two','city'=>'Cairo','country'=>'EG','is_default'=>true])->assertOk();
+  $this->assertDatabaseHas('customer_addresses',['id'=>$firstId,'is_default'=>0]);
+  $this->actingAs($this->customer)->deleteJson("/api/customer/addresses/{$secondId}")->assertNoContent();
+  $this->assertDatabaseHas('customer_addresses',['id'=>$firstId,'is_default'=>1]);
+  $this->actingAs($this->customer)->postJson('/api/customer/addresses',['recipient_name'=>'Invalid','phone'=>'012','address_line1'=>'Three','city'=>'Cairo','country'=>'EGY'])->assertUnprocessable()->assertJsonValidationErrors(['country']);
+ }
 }
