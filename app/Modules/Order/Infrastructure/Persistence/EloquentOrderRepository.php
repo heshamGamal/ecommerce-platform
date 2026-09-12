@@ -87,6 +87,22 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         });
     }
 
+    public function addShippingFee(int $orderId, int $fee): object
+    {
+        return DB::transaction(function () use ($orderId, $fee): CustomerOrder {
+            $order = CustomerOrder::query()->lockForUpdate()->find($orderId);
+            if ($order === null) {
+                throw new OrderNotFoundException('Order not found.');
+            }
+            $shippingAmount = $order->shipping_amount + $fee;
+            $order->update([
+                'shipping_amount' => $shippingAmount,
+                'total_amount' => $order->subtotal_amount - $order->discount_amount + $order->tax_amount + $shippingAmount,
+            ]);
+            return $order->fresh(['items.product', 'items.variant', 'payments', 'shipments']);
+        });
+    }
+
     public function checkout(int $userId, int $addressId, string $currency, ?string $idempotencyKey): object
     {
         return DB::transaction(function () use ($userId, $addressId, $currency, $idempotencyKey): object {

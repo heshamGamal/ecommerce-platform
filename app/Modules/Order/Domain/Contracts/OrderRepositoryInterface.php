@@ -17,4 +17,6 @@ interface OrderRepositoryInterface
     public function updateStatus(int $orderId, string $status): object;
 
     public function cancelForUser(int $userId, int $orderId): object;
+
+    public function addShippingFee(int $orderId, int $fee): object;
 }

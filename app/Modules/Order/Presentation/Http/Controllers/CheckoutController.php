@@ -18,6 +18,10 @@ final class CheckoutController extends Controller
             addressId: (int) $data['address_id'],
             currency: strtoupper($data['currency'] ?? 'EGP'),
             idempotencyKey: $data['idempotency_key'] ?? null,
+            shippingMethodId: isset($data['shipping_method_id']) ? (int) $data['shipping_method_id'] : null,
+            shippingIdempotencyKey: $data['shipping_idempotency_key'] ?? null,
+            paymentMethod: $data['payment_method'] ?? null,
+            paymentIdempotencyKey: $data['payment_idempotency_key'] ?? null,
         ));
 
         return response()->json(['data' => $order], 201);

@@ -6,11 +6,17 @@ use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Order\Domain\ValueObjects\CheckoutData;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
+use App\Modules\Payment\Application\UseCases\CreatePayment;
+use App\Modules\Payment\Domain\ValueObjects\PaymentData;
+use App\Modules\Shipping\Application\UseCases\CreateShipment;
+use App\Modules\Shipping\Domain\ValueObjects\CreateShipmentData;
 final class Checkout
 {
     public function __construct(
         private readonly AuthenticationServiceInterface $authentication,
         private readonly OrderRepositoryInterface $orders,
+        private readonly CreateShipment $createShipment,
+        private readonly CreatePayment $createPayment,
     ) {}
 
     public function execute(CheckoutData $data): object
@@ -20,11 +26,32 @@ final class Checkout
             throw new AuthenticationException('Unauthenticated.');
         }
 
-        return $this->orders->checkout(
+        $order = $this->orders->checkout(
             $user->id,
             $data->addressId,
             $data->currency,
             $data->idempotencyKey,
         );
+
+        if ($data->shippingMethodId !== null) {
+            $shipment = $this->createShipment->execute($order->id, new CreateShipmentData(
+                $data->shippingMethodId,
+                $data->shippingIdempotencyKey ?? $data->idempotencyKey ?? ('shipment-' . $order->id),
+            ));
+            if ((int) $order->shipping_amount === 0) {
+                $order = $this->orders->addShippingFee($order->id, (int) $shipment->fee);
+            }
+        }
+
+        if ($data->paymentMethod !== null) {
+            $this->createPayment->execute($order->id, new PaymentData(
+                method: $data->paymentMethod,
+                currency: $order->currency,
+                idempotencyKey: $data->paymentIdempotencyKey ?? $data->idempotencyKey ?? ('payment-' . $order->id),
+                amount: $order->total_amount,
+            ));
+        }
+
+        return $this->orders->findForUser($user->id, $order->id);
     }
 }

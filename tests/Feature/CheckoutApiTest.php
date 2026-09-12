@@ -5,8 +5,11 @@ namespace Tests\Feature;
 use App\Models\CustomerAddress;
 use App\Models\CustomerCart;
 use App\Models\InventoryItem;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Role;
+use App\Models\Shipment;
+use App\Models\ShippingMethod;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -70,5 +73,45 @@ final class CheckoutApiTest extends TestCase
         $first->assertCreated();
         $second->assertCreated()->assertJsonPath('data.id', $first->json('data.id'));
         $this->assertDatabaseCount('customer_orders', 1);
+    }
+
+    public function test_checkout_orchestrates_shipping_and_payment_after_reserving_inventory(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $user = User::factory()->create();
+        $product = Product::query()->create([
+            'name' => 'Full Flow Product', 'slug' => 'full-flow-product',
+            'type' => 'simple', 'status' => 'active', 'price' => 1250,
+        ]);
+        $address = CustomerAddress::query()->create([
+            'user_id' => $user->id, 'recipient_name' => 'Customer', 'phone' => '01000000000',
+            'address_line1' => 'Street 1', 'city' => 'Cairo', 'country' => 'EG', 'is_default' => true,
+        ]);
+        $cart = CustomerCart::query()->create(['user_id' => $user->id]);
+        $cart->items()->create(['product_id' => $product->id, 'quantity' => 2]);
+        InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 5, 'reserved' => 0]);
+        $method = ShippingMethod::query()->create([
+            'code' => 'standard', 'name' => 'Standard', 'base_fee' => 150,
+            'currency' => 'EGP', 'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->postJson('/api/customer/checkout', [
+            'address_id' => $address->id,
+            'currency' => 'EGP',
+            'idempotency_key' => 'full-flow-order',
+            'shipping_method_id' => $method->id,
+            'shipping_idempotency_key' => 'full-flow-shipment',
+            'payment_method' => 'cash_on_delivery',
+            'payment_idempotency_key' => 'full-flow-payment',
+        ]);
+
+        $response->assertCreated()->assertJsonPath('data.total_amount', 2650);
+        $orderId = $response->json('data.id');
+        $this->assertDatabaseHas('inventory_items', ['product_id' => $product->id, 'reserved' => 2]);
+        $this->assertDatabaseHas('shipments', ['order_id' => $orderId, 'fee' => 150, 'status' => 'pending']);
+        $this->assertDatabaseHas('payments', ['order_id' => $orderId, 'amount' => 2650, 'status' => 'pending']);
+        $this->assertDatabaseCount('customer_orders', 1);
+        $this->assertDatabaseCount('shipments', 1);
+        $this->assertDatabaseCount('payments', 1);
     }
 }
