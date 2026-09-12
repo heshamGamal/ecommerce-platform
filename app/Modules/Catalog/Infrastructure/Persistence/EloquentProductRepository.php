@@ -3,6 +3,7 @@ namespace App\Modules\Catalog\Infrastructure\Persistence;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Modules\Catalog\Domain\ValueObjects\ProductData;
+use App\Modules\Catalog\Domain\ValueObjects\ProductListCriteria;
 use App\Modules\Catalog\Domain\ValueObjects\ProductVariantData;
 use App\Modules\Catalog\Domain\Contracts\ProductRepositoryInterface;
 use App\Modules\Catalog\Domain\Exceptions\DuplicateSkuException;
@@ -16,6 +17,28 @@ use Illuminate\Support\Facades\DB;
 class EloquentProductRepository implements ProductRepositoryInterface
 {
     public function all(): iterable { return Product::query()->with(['brand', 'category'])->orderByDesc('id')->get(); }
+    public function search(ProductListCriteria $criteria): object
+    {
+        $query = Product::query()->with(['brand', 'category'])
+            ->when($criteria->search, fn ($q, $search) => $q->where(function ($inner) use ($search): void {
+                $inner->where('name', 'like', '%' . $search . '%')->orWhereHas('variants', fn ($variants) => $variants->where('sku', 'like', '%' . $search . '%'));
+            }))
+            ->when($criteria->categoryId, fn ($q, $id) => $q->where('category_id', $id))
+            ->when($criteria->brandId, fn ($q, $id) => $q->where('brand_id', $id))
+            ->when($criteria->type, fn ($q, $type) => $q->where('type', $type))
+            ->when($criteria->status, fn ($q, $status) => $q->where('status', $status))
+            ->when($criteria->minPrice !== null, fn ($q) => $q->where('price', '>=', $criteria->minPrice))
+            ->when($criteria->maxPrice !== null, fn ($q) => $q->where('price', '<=', $criteria->maxPrice));
+
+        match ($criteria->sort) {
+            'price_asc' => $query->orderBy('price')->orderByDesc('id'),
+            'price_desc' => $query->orderByDesc('price')->orderByDesc('id'),
+            'name_asc' => $query->orderBy('name')->orderByDesc('id'),
+            default => $query->orderByDesc('id'),
+        };
+
+        return $query->paginate($criteria->perPage, ['*'], 'page', $criteria->page);
+    }
     public function findOrFail(int $id): object
     {
         $model = Product::query()->with(['brand', 'category', 'variants.attributeValues.attribute'])->find($id);

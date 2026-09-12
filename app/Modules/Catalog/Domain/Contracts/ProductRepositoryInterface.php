@@ -3,11 +3,13 @@
 namespace App\Modules\Catalog\Domain\Contracts;
 
 use App\Modules\Catalog\Domain\ValueObjects\ProductData;
+use App\Modules\Catalog\Domain\ValueObjects\ProductListCriteria;
 use App\Modules\Catalog\Domain\ValueObjects\ProductVariantData;
 
 interface ProductRepositoryInterface
 {
     public function all(): iterable;
+    public function search(ProductListCriteria $criteria): object;
     public function findOrFail(int $id): object;
     public function slugExists(string $slug, ?int $exceptId = null): bool;
     public function create(ProductData $data, string $slug): object;

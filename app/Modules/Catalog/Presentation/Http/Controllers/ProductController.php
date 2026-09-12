@@ -4,6 +4,7 @@ namespace App\Modules\Catalog\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Catalog\Domain\ValueObjects\ProductData;
 use App\Modules\Catalog\Domain\ValueObjects\ProductVariantData;
+use App\Modules\Catalog\Domain\ValueObjects\ProductListCriteria;
 use App\Modules\Catalog\Application\UseCases\Products\CreateProduct;
 use App\Modules\Catalog\Application\UseCases\Products\CreateProductVariant;
 use App\Modules\Catalog\Application\UseCases\Products\DeleteProduct;
@@ -25,7 +26,9 @@ class ProductController extends Controller
 {
     public function index(CatalogActionRequest $request, ListProducts $useCase): JsonResponse
     {
-        return response()->json(['data' => $useCase->execute()]);
+        $filters = $request->validated();
+        $products = $filters === [] ? $useCase->execute() : $useCase->execute(ProductListCriteria::fromArray($filters));
+        return response()->json(['data' => $products]);
     }
 
     public function store(StoreProductRequest $request, CreateProduct $useCase): JsonResponse

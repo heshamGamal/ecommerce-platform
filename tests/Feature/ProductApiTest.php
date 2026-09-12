@@ -62,6 +62,19 @@ class ProductApiTest extends TestCase
         ])->assertConflict();
     }
 
+    public function test_product_search_filters_and_pagination_are_validated(): void
+    {
+        Product::query()->create(['name' => 'Alpha Phone', 'slug' => 'alpha-phone', 'type' => 'simple', 'status' => 'active', 'price' => 100]);
+        Product::query()->create(['name' => 'Beta Phone', 'slug' => 'beta-phone', 'type' => 'simple', 'status' => 'inactive', 'price' => 300]);
+
+        $this->actingAs($this->admin)->getJson('/api/products?search=Alpha&status=active&min_price=50&max_price=200&sort=price_desc&per_page=1')
+            ->assertOk()
+            ->assertJsonPath('data.data.0.slug', 'alpha-phone')
+            ->assertJsonPath('data.per_page', 1)
+            ->assertJsonPath('data.total', 1);
+        $this->actingAs($this->admin)->getJson('/api/products?sort=invalid')->assertUnprocessable()->assertJsonValidationErrors(['sort']);
+    }
+
     public function test_variant_crud_and_nested_404_boundaries(): void
     {
         [$product, $colorRed] = $this->variableProductAndValue();

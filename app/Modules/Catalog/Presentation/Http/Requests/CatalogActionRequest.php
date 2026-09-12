@@ -30,6 +30,17 @@ final class CatalogActionRequest extends FormRequest
 
     public function rules(): array
     {
-        return [];
+        return [
+            'search' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'category_id' => ['sometimes', 'nullable', 'integer', 'min:1'],
+            'brand_id' => ['sometimes', 'nullable', 'integer', 'min:1'],
+            'type' => ['sometimes', 'nullable', 'in:simple,variable'],
+            'status' => ['sometimes', 'nullable', 'in:active,inactive,draft'],
+            'min_price' => ['sometimes', 'nullable', 'integer', 'min:0'],
+            'max_price' => ['sometimes', 'nullable', 'integer', 'min:0', 'gte:min_price'],
+            'sort' => ['sometimes', 'in:newest,price_asc,price_desc,name_asc'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+        ];
     }
 }
