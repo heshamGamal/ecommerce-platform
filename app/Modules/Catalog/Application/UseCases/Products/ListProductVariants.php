@@ -8,10 +8,10 @@ final class ListProductVariants
 {
     public function __construct(private readonly ProductRepositoryInterface $products) {}
 
-    public function execute(int $productId): Collection
+    public function execute(int $productId): iterable
     {
-        $product = $this->products->findOrFail($productId);
+        $this->products->findOrFail($productId);
 
-        return $this->products->variants($product);
+        return $this->products->variants($productId);
     }
 }

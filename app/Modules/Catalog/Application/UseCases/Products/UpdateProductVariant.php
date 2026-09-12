@@ -14,15 +14,15 @@ final class UpdateProductVariant
  public function execute(int $productId,int $variantId,ProductVariantData $data): ProductVariant
  {
   $product=$this->products->findOrFail($productId);if($product->type!=='variable') throw InvalidProductTypeException::variantNotAllowed();
-  $variant=$this->products->findVariantOrFail($product,$variantId);
+  $variant=$this->products->findVariantOrFail($productId,$variantId);
   if($this->products->skuExists($data->sku,$variant->id)) throw new DuplicateSkuException($data->sku);
   $values=$this->validatedValues($data);$hash=$this->hash($values);
-  if($this->products->combinationExists($product,$hash,$variant->id)) throw InvalidVariantCombinationException::duplicate();
-  return $this->products->updateVariant($variant,$data,$hash,$values);
+  if($this->products->combinationExists($productId,$hash,$variant->id)) throw InvalidVariantCombinationException::duplicate();
+  return $this->products->updateVariant($variant->id,$data,$hash,$values);
  }
  private function validatedValues(ProductVariantData $data): Collection
  {
-  $ids=array_values(array_unique($data->attributeValueIds));$values=$this->attributeValues->findMany($ids);
+  $ids=array_values(array_unique($data->attributeValueIds));$values=collect($this->attributeValues->findMany($ids));
   if(count($ids)!==count($data->attributeValueIds)||$values->count()!==count($ids)||$values->pluck('attribute_id')->unique()->count()!==$values->count()) throw InvalidVariantCombinationException::invalid();
   return $values;
  }

@@ -44,7 +44,7 @@ class ProductReadUseCasesTest extends TestCase
         $variants = new Collection([new ProductVariant(['sku' => 'SKU'])]);
         $repository = Mockery::mock(ProductRepositoryInterface::class);
         $repository->shouldReceive('findOrFail')->once()->with(10)->andReturn($product);
-        $repository->shouldReceive('variants')->once()->with($product)->andReturn($variants);
+        $repository->shouldReceive('variants')->once()->with(10)->andReturn($variants);
 
         self::assertSame($variants, (new ListProductVariants($repository))->execute(10));
     }
@@ -55,7 +55,7 @@ class ProductReadUseCasesTest extends TestCase
         $variant = new ProductVariant(['sku' => 'SKU']);
         $repository = Mockery::mock(ProductRepositoryInterface::class);
         $repository->shouldReceive('findOrFail')->once()->with(10)->andReturn($product);
-        $repository->shouldReceive('findVariantOrFail')->once()->with($product, 20)->andReturn($variant);
+        $repository->shouldReceive('findVariantOrFail')->once()->with(10, 20)->andReturn($variant);
 
         self::assertSame($variant, (new GetProductVariant($repository))->execute(10, 20));
     }

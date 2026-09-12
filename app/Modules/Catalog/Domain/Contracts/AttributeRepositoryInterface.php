@@ -2,17 +2,15 @@
 
 namespace App\Modules\Catalog\Domain\Contracts;
 
-use App\Models\Attribute;
 use App\Modules\Catalog\Domain\ValueObjects\AttributeData;
-use Illuminate\Support\Collection;
 
 interface AttributeRepositoryInterface
 {
-    public function all(): Collection;
-    public function findOrFail(int $id): Attribute;
+    public function all(): iterable;
+    public function findOrFail(int $id): object;
     public function nameExists(string $name, ?int $exceptId = null): bool;
-    public function create(AttributeData $data): Attribute;
-    public function update(Attribute $attribute, AttributeData $data): Attribute;
-    public function isUsed(Attribute $attribute): bool;
-    public function delete(Attribute $attribute): void;
+    public function create(AttributeData $data): object;
+    public function update(int $attributeId, AttributeData $data): object;
+    public function isUsed(int $attributeId): bool;
+    public function delete(int $attributeId): void;
 }

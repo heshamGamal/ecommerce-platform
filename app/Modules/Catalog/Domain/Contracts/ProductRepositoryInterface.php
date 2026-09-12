@@ -2,26 +2,23 @@
 
 namespace App\Modules\Catalog\Domain\Contracts;
 
-use App\Models\Product;
-use App\Models\ProductVariant;
 use App\Modules\Catalog\Domain\ValueObjects\ProductData;
 use App\Modules\Catalog\Domain\ValueObjects\ProductVariantData;
-use Illuminate\Support\Collection;
 
 interface ProductRepositoryInterface
 {
-    public function all(): Collection;
-    public function findOrFail(int $id): Product;
+    public function all(): iterable;
+    public function findOrFail(int $id): object;
     public function slugExists(string $slug, ?int $exceptId = null): bool;
-    public function create(ProductData $data, string $slug): Product;
-    public function update(Product $product, ProductData $data, string $slug): Product;
-    public function delete(Product $product): void;
-    public function hasVariants(Product $product): bool;
-    public function variants(Product $product): Collection;
-    public function findVariantOrFail(Product $product, int $variantId): ProductVariant;
+    public function create(ProductData $data, string $slug): object;
+    public function update(int $productId, ProductData $data, string $slug): object;
+    public function delete(int $productId): void;
+    public function hasVariants(int $productId): bool;
+    public function variants(int $productId): iterable;
+    public function findVariantOrFail(int $productId, int $variantId): object;
     public function skuExists(string $sku, ?int $exceptId = null): bool;
-    public function combinationExists(Product $product, string $hash, ?int $exceptId = null): bool;
-    public function createVariant(Product $product, ProductVariantData $data, string $hash, Collection $values): ProductVariant;
-    public function updateVariant(ProductVariant $variant, ProductVariantData $data, string $hash, Collection $values): ProductVariant;
-    public function deleteVariant(ProductVariant $variant): void;
+    public function combinationExists(int $productId, string $hash, ?int $exceptId = null): bool;
+    public function createVariant(int $productId, ProductVariantData $data, string $hash, iterable $values): object;
+    public function updateVariant(int $variantId, ProductVariantData $data, string $hash, iterable $values): object;
+    public function deleteVariant(int $variantId): void;
 }

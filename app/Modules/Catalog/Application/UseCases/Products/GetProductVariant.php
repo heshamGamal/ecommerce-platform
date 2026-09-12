@@ -10,8 +10,8 @@ final class GetProductVariant
 
     public function execute(int $productId, int $variantId): ProductVariant
     {
-        $product = $this->products->findOrFail($productId);
+        $this->products->findOrFail($productId);
 
-        return $this->products->findVariantOrFail($product, $variantId);
+        return $this->products->findVariantOrFail($productId, $variantId);
     }
 }

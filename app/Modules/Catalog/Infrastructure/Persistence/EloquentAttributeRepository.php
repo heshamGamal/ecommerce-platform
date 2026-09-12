@@ -7,8 +7,8 @@ use App\Modules\Catalog\Domain\Exceptions\AttributeNotFoundException;
 use Illuminate\Support\Collection;
 class EloquentAttributeRepository implements AttributeRepositoryInterface
 {
-    public function all(): Collection { return Attribute::query()->with('values')->orderBy('name')->get(); }
-    public function findOrFail(int $id): Attribute
+    public function all(): iterable { return Attribute::query()->with('values')->orderBy('name')->get(); }
+    public function findOrFail(int $id): object
     {
         $model = Attribute::query()->with('values')->find($id);
         if ($model === null) throw new AttributeNotFoundException($id);
@@ -18,8 +18,8 @@ class EloquentAttributeRepository implements AttributeRepositoryInterface
     {
         return Attribute::query()->where('name', $name)->when($exceptId, fn ($q) => $q->whereKeyNot($exceptId))->exists();
     }
-    public function create(AttributeData $data): Attribute { return Attribute::query()->create($data->toArray())->load('values'); }
-    public function update(Attribute $attribute, AttributeData $data): Attribute { $attribute->update($data->toArray()); return $attribute->refresh()->load('values'); }
-    public function isUsed(Attribute $attribute): bool { return $attribute->values()->whereHas('variants')->exists(); }
-    public function delete(Attribute $attribute): void { $attribute->delete(); }
+    public function create(AttributeData $data): object { return Attribute::query()->create($data->toArray())->load('values'); }
+    public function update(int $attributeId, AttributeData $data): object { $attribute = $this->findOrFail($attributeId); $attribute->update($data->toArray()); return $attribute->refresh()->load('values'); }
+    public function isUsed(int $attributeId): bool { return $this->findOrFail($attributeId)->values()->whereHas('variants')->exists(); }
+    public function delete(int $attributeId): void { $this->findOrFail($attributeId)->delete(); }
 }

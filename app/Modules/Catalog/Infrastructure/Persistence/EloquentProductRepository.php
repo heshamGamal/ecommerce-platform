@@ -15,8 +15,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 class EloquentProductRepository implements ProductRepositoryInterface
 {
-    public function all(): Collection { return Product::query()->with(['brand', 'category'])->orderByDesc('id')->get(); }
-    public function findOrFail(int $id): Product
+    public function all(): iterable { return Product::query()->with(['brand', 'category'])->orderByDesc('id')->get(); }
+    public function findOrFail(int $id): object
     {
         $model = Product::query()->with(['brand', 'category', 'variants.attributeValues.attribute'])->find($id);
         if ($model === null) throw new ProductNotFoundException($id);
@@ -26,21 +26,23 @@ class EloquentProductRepository implements ProductRepositoryInterface
     {
         return Product::query()->where('slug', $slug)->when($exceptId, fn ($q) => $q->whereKeyNot($exceptId))->exists();
     }
-    public function create(ProductData $data, string $slug): Product
+    public function create(ProductData $data, string $slug): object
     {
         try { return Product::query()->create(array_merge($data->toArray(), ['slug' => $slug]))->load(['brand', 'category']); }
         catch (QueryException $e) { if ($this->slugExists($slug)) throw new DuplicateSlugException($slug); throw $e; }
     }
-    public function update(Product $product, ProductData $data, string $slug): Product
+    public function update(int $productId, ProductData $data, string $slug): object
     {
+        $product = $this->findOrFail($productId);
         try { $product->update(array_merge($data->toArray(), ['slug' => $slug])); return $product->refresh()->load(['brand', 'category', 'variants.attributeValues.attribute']); }
         catch (QueryException $e) { if ($this->slugExists($slug, $product->id)) throw new DuplicateSlugException($slug); throw $e; }
     }
-    public function delete(Product $product): void { $product->delete(); }
-    public function hasVariants(Product $product): bool { return $product->variants()->exists(); }
-    public function variants(Product $product): Collection { return $product->variants()->with('attributeValues.attribute')->orderBy('id')->get(); }
-    public function findVariantOrFail(Product $product, int $variantId): ProductVariant
+    public function delete(int $productId): void { $this->findOrFail($productId)->delete(); }
+    public function hasVariants(int $productId): bool { return $this->findOrFail($productId)->variants()->exists(); }
+    public function variants(int $productId): iterable { return $this->findOrFail($productId)->variants()->with('attributeValues.attribute')->orderBy('id')->get(); }
+    public function findVariantOrFail(int $productId, int $variantId): object
     {
+        $product = $this->findOrFail($productId);
         $model = $product->variants()->with('attributeValues.attribute')->find($variantId);
         if ($model === null) throw new VariantNotFoundException($variantId);
         return $model;
@@ -49,12 +51,14 @@ class EloquentProductRepository implements ProductRepositoryInterface
     {
         return ProductVariant::query()->where('sku', $sku)->when($exceptId, fn ($q) => $q->whereKeyNot($exceptId))->exists();
     }
-    public function combinationExists(Product $product, string $hash, ?int $exceptId = null): bool
+    public function combinationExists(int $productId, string $hash, ?int $exceptId = null): bool
     {
-        return $product->variants()->where('combination_hash', $hash)->when($exceptId, fn ($q) => $q->whereKeyNot($exceptId))->exists();
+        return $this->findOrFail($productId)->variants()->where('combination_hash', $hash)->when($exceptId, fn ($q) => $q->whereKeyNot($exceptId))->exists();
     }
-    public function createVariant(Product $product, ProductVariantData $data, string $hash, Collection $values): ProductVariant
+    public function createVariant(int $productId, ProductVariantData $data, string $hash, iterable $values): object
     {
+        $product = $this->findOrFail($productId);
+        $values = collect($values);
         try {
             return DB::transaction(function () use ($product, $data, $hash, $values) {
                 $variant = $product->variants()->create(array_merge($data->persistenceData(), ['combination_hash' => $hash]));
@@ -63,8 +67,10 @@ class EloquentProductRepository implements ProductRepositoryInterface
             });
         } catch (QueryException $e) { $this->throwVariantConflict($product, $data->sku, $hash); throw $e; }
     }
-    public function updateVariant(ProductVariant $variant, ProductVariantData $data, string $hash, Collection $values): ProductVariant
+    public function updateVariant(int $variantId, ProductVariantData $data, string $hash, iterable $values): object
     {
+        $variant = ProductVariant::query()->findOrFail($variantId);
+        $values = collect($values);
         try {
             return DB::transaction(function () use ($variant, $data, $hash, $values) {
                 $variant->update(array_merge($data->persistenceData(), ['combination_hash' => $hash]));
@@ -73,7 +79,7 @@ class EloquentProductRepository implements ProductRepositoryInterface
             });
         } catch (QueryException $e) { $this->throwVariantConflict($variant->product, $data->sku, $hash, $variant->id); throw $e; }
     }
-    public function deleteVariant(ProductVariant $variant): void { $variant->delete(); }
+    public function deleteVariant(int $variantId): void { ProductVariant::query()->findOrFail($variantId)->delete(); }
     private function pivotData(Collection $values): array
     {
         return $values->mapWithKeys(fn ($value) => [$value->id => ['attribute_id' => $value->attribute_id]])->all();

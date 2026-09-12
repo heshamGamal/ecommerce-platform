@@ -2,18 +2,16 @@
 
 namespace App\Modules\Catalog\Domain\Contracts;
 
-use App\Models\AttributeValue;
 use App\Modules\Catalog\Domain\ValueObjects\AttributeValueData;
-use Illuminate\Support\Collection;
 
 interface AttributeValueRepositoryInterface
 {
-    public function forAttribute(int $attributeId): Collection;
-    public function findOrFail(int $id, ?int $attributeId = null): AttributeValue;
-    public function findMany(array $ids): Collection;
+    public function forAttribute(int $attributeId): iterable;
+    public function findOrFail(int $id, ?int $attributeId = null): object;
+    public function findMany(array $ids): iterable;
     public function valueExists(int $attributeId, string $value, ?int $exceptId = null): bool;
-    public function create(AttributeValueData $data): AttributeValue;
-    public function update(AttributeValue $value, AttributeValueData $data): AttributeValue;
-    public function isUsed(AttributeValue $value): bool;
-    public function delete(AttributeValue $value): void;
+    public function create(AttributeValueData $data): object;
+    public function update(int $valueId, AttributeValueData $data): object;
+    public function isUsed(int $valueId): bool;
+    public function delete(int $valueId): void;
 }
