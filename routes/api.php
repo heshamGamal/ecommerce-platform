@@ -12,6 +12,7 @@ use App\Modules\Inventory\Presentation\Http\Controllers\InventoryController;
 use App\Modules\Order\Presentation\Http\Controllers\CheckoutController;
 use App\Modules\Order\Presentation\Http\Controllers\OrderController;
 use App\Modules\Payment\Presentation\Http\Controllers\PaymentController;
+use App\Modules\Shipping\Presentation\Http\Controllers\ShippingController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('auth/register', [AuthController::class, 'register'])->middleware('guest')->name('auth.register');
@@ -42,6 +43,9 @@ Route::middleware('auth')->group(function () {
     Route::post('customer/checkout', CheckoutController::class)->name('customer.checkout');
     Route::post('customer/orders/{orderId}/payments', [PaymentController::class, 'store'])->name('customer.payments.store');
     Route::get('customer/orders/{orderId}/payments', [PaymentController::class, 'index'])->name('customer.payments.index');
+    Route::get('customer/shipping-methods', [ShippingController::class, 'customerMethods'])->name('customer.shipping-methods.index');
+    Route::get('customer/orders/{orderId}/shipments', [ShippingController::class, 'customerShipments'])->name('customer.shipments.index');
+    Route::post('customer/orders/{orderId}/shipments', [ShippingController::class, 'createShipment'])->name('customer.shipments.store');
     Route::get('customer/cart', [CustomerFeaturesController::class, 'cart'])->name('customer.cart.show');
     Route::post('customer/cart/items', [CustomerFeaturesController::class, 'addCartItem'])->name('customer.cart.items.store');
     Route::patch('customer/cart/items', [CustomerFeaturesController::class, 'updateCartItem'])->name('customer.cart.items.update');
@@ -91,4 +95,10 @@ Route::middleware('auth')->group(function () {
     Route::get('payments/orders/{orderId}', [PaymentController::class, 'adminIndex'])->name('payments.index');
     Route::post('payments/{paymentId}/confirm', [PaymentController::class, 'confirm'])->name('payments.confirm');
     Route::post('payments/{paymentId}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
+    Route::get('shipping-methods', [ShippingController::class, 'index'])->name('shipping-methods.index');
+    Route::get('shipping-methods/{id}', [ShippingController::class, 'show'])->name('shipping-methods.show');
+    Route::post('shipping-methods', [ShippingController::class, 'store'])->name('shipping-methods.store');
+    Route::match(['put', 'patch'], 'shipping-methods/{id}', [ShippingController::class, 'update'])->name('shipping-methods.update');
+    Route::delete('shipping-methods/{id}', [ShippingController::class, 'destroy'])->name('shipping-methods.destroy');
+    Route::patch('shipments/{id}/status', [ShippingController::class, 'status'])->name('shipments.status');
 });
