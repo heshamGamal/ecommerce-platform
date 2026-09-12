@@ -3,8 +3,8 @@
 namespace App\Modules\Order\Infrastructure\Persistence;
 
 use App\Models\CustomerOrder;
-use App\Models\InventoryItem;
 use App\Models\User;
+use App\Modules\Inventory\Domain\Contracts\InventoryRepositoryInterface;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
 use App\Modules\Order\Domain\Exceptions\CheckoutException;
 use App\Modules\Order\Domain\Exceptions\InvalidOrderStatusTransitionException;
@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\DB;
 
 final class EloquentOrderRepository implements OrderRepositoryInterface
 {
+    public function __construct(private readonly InventoryRepositoryInterface $inventory)
+    {
+    }
+
     public function listForUser(int $userId): iterable
     {
         return CustomerOrder::query()->with('items.product')->where('user_id', $userId)->latest()->get();
@@ -77,10 +81,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
                 throw new OrderActionNotAllowedException('This order can no longer be cancelled.');
             }
             foreach ($order->items as $item) {
-                $inventory = InventoryItem::query()->where('product_id', $item->product_id)->where('variant_id', $item->variant_id)->lockForUpdate()->first();
-                if ($inventory !== null && $inventory->reserved >= $item->quantity) {
-                    $inventory->decrement('reserved', $item->quantity);
-                }
+                $this->inventory->release($item->product_id, $item->variant_id, $item->quantity);
             }
             $order->update(['status' => 'cancelled']);
             return $order->fresh(['items.product', 'items.variant']);
@@ -124,12 +125,10 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
                 if ($product->type === 'variable' && ($variant === null || $variant->status !== 'active')) throw CheckoutException::unavailableProduct($product->name);
                 $unitPrice = $variant?->price ?? $product->price;
                 if ($unitPrice === null || $unitPrice < 0) throw CheckoutException::missingPrice($product->name);
-                $inventory = InventoryItem::query()->where('product_id', $product->id)->where('variant_id', $variant?->id)->lockForUpdate()->first();
-                if ($inventory === null || ($inventory->on_hand - $inventory->reserved) < $cartItem->quantity) throw CheckoutException::unavailableProduct($product->name);
                 $lineTotal = $unitPrice * $cartItem->quantity;
                 $subtotal += $lineTotal;
                 $snapshots[] = ['product_id' => $product->id, 'variant_id' => $variant?->id, 'name' => $product->name, 'sku' => $variant?->sku, 'quantity' => $cartItem->quantity, 'unit_price' => $unitPrice, 'discount_amount' => 0, 'tax_amount' => 0, 'total_amount' => $lineTotal];
-                $inventory->increment('reserved', $cartItem->quantity);
+                $this->inventory->reserve($product->id, $variant?->id, $cartItem->quantity);
             }
             $order = CustomerOrder::query()->create(['user_id' => $userId, 'status' => 'pending', 'total_amount' => $subtotal, 'subtotal_amount' => $subtotal, 'discount_amount' => 0, 'tax_amount' => 0, 'shipping_amount' => 0, 'currency' => $currency, 'shipping_address' => ['recipient_name' => $address->recipient_name, 'phone' => $address->phone, 'address_line1' => $address->address_line1, 'address_line2' => $address->address_line2, 'city' => $address->city, 'state' => $address->state, 'postal_code' => $address->postal_code, 'country' => $address->country], 'idempotency_key' => $idempotencyKey]);
             $order->items()->createMany($snapshots);
