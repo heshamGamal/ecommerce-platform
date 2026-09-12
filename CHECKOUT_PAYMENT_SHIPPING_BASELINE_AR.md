@@ -204,7 +204,7 @@ client_secret + unifiedcheckout URL
 تمت إضافة endpoint عام:
 
 ```text
-POST /api/webhooks/paymob
+POST /api/v1/webhooks/paymob
 ```
 
 ويتحقق من HMAC-SHA512 قبل تحديث payment. كما تم دعم deduplication للحدث باستخدام `provider + event_id`، وربط callback أولًا بـ `merchant_order_id`، ثم بـ provider reference عند الحاجة.
@@ -218,7 +218,7 @@ PAYMOB_SECRET_KEY=...
 PAYMOB_PUBLIC_KEY=...
 PAYMOB_HMAC_SECRET=...
 PAYMOB_INTEGRATION_IDS=...
-PAYMOB_NOTIFICATION_URL=https://your-domain.example/api/webhooks/paymob
+PAYMOB_NOTIFICATION_URL=https://your-domain.example/api/v1/webhooks/paymob
 PAYMOB_REDIRECTION_URL=https://your-domain.example/payment/return
 ```
 
@@ -254,7 +254,7 @@ sessionUrl
 تمت إضافة callback:
 
 ```text
-POST /api/webhooks/kashier
+POST /api/v1/webhooks/kashier
 ```
 
 ويتم التحقق من توقيع الاستجابة باستخدام ترتيب الحقول الثابت الموثق من Kashier، ثم تخزين الحدث في `payment_webhook_events` ومنع تكراره وتحديث Payment وOrder داخل transaction محلية.
@@ -269,7 +269,7 @@ KASHIER_CHECKOUT_BASE_URL=https://payments.kashier.io
 KASHIER_MERCHANT_ID=...
 KASHIER_SECRET_KEY=...
 KASHIER_PAYMENT_API_KEY=...
-KASHIER_WEBHOOK_URL=https://your-domain.example/api/webhooks/kashier
+KASHIER_WEBHOOK_URL=https://your-domain.example/api/v1/webhooks/kashier
 KASHIER_REDIRECT_URL=https://your-domain.example/payment/return
 ```
 
@@ -355,7 +355,7 @@ ShippingProviderInterface
 تمت إضافة Webhook:
 
 ```text
-POST /api/webhooks/bosta
+POST /api/v1/webhooks/bosta
 ```
 
 ويتم حمايته عبر Custom Header وقيمة سرية قابلة للتعديل من Settings، ثم تحويل حالات Bosta إلى الحالات المحلية (`picked_up`, `in_transit`, `out_for_delivery`, `delivered`, `cancelled`).

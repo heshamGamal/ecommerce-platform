@@ -19,3 +19,6 @@ jobs:
           node-version: '22'
       - name: Validate OpenAPI document
         run: npx --yes @redocly/cli lint docs/openapi.json
+      - name: Reject legacy API references
+        run: |
+          ! grep -RInE '/api/webhooks|/api/products|/api/customer' .env.example CHECKOUT_PAYMENT_SHIPPING_BASELINE_AR.md docs routes
