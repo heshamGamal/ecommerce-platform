@@ -9,7 +9,12 @@ class Setting extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['group', 'key', 'value', 'type', 'description'];
+    protected $fillable = ['group', 'key', 'value', 'type', 'description', 'is_secret'];
+
+    protected function casts(): array
+    {
+        return ['is_secret' => 'boolean'];
+    }
 
     public function getTypedValue(): mixed
     {

@@ -4,21 +4,26 @@ namespace App\Modules\Payment\Infrastructure\Gateways;
 
 use App\Modules\Payment\Domain\Contracts\PaymentGatewayInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
+use App\Modules\Payment\Infrastructure\Configuration\PaymentGatewaySettings;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 
 final class PaymobGateway implements PaymentGatewayInterface
 {
+    public function __construct(private readonly PaymentGatewaySettings $settings)
+    {
+    }
+
     public function supports(string $method): bool
     {
-        return $method === 'paymob';
+        return $method === 'paymob' && $this->settings->enabled('paymob', (bool) config('services.paymob.enabled', false));
     }
 
     public function createPayment(object $order, string $method, string $idempotencyKey): array
     {
-        $secretKey = (string) config('services.paymob.secret_key');
-        $publicKey = (string) config('services.paymob.public_key');
-        $integrationIds = config('services.paymob.integration_ids', []);
+        $secretKey = (string) $this->settings->value('paymob', 'secret_key', config('services.paymob.secret_key'));
+        $publicKey = (string) $this->settings->value('paymob', 'public_key', config('services.paymob.public_key'));
+        $integrationIds = $this->settings->value('paymob', 'integration_ids', config('services.paymob.integration_ids', []));
 
         if ($secretKey === '' || $publicKey === '' || $integrationIds === []) {
             throw new PaymentException('Paymob is not configured.');
@@ -50,8 +55,8 @@ final class PaymobGateway implements PaymentGatewayInterface
             'items' => $items,
             'billing_data' => $billing,
             'special_reference' => $idempotencyKey,
-            'notification_url' => config('services.paymob.notification_url'),
-            'redirection_url' => config('services.paymob.redirection_url'),
+            'notification_url' => $this->settings->value('paymob', 'notification_url', config('services.paymob.notification_url')),
+            'redirection_url' => $this->settings->value('paymob', 'redirection_url', config('services.paymob.redirection_url')),
         ];
 
         $response = $this->client($secretKey)->post('/v1/intention/', $payload)->throw()->json();
@@ -85,7 +90,7 @@ final class PaymobGateway implements PaymentGatewayInterface
             throw new PaymentException('Paymob transaction reference is missing.');
         }
 
-        $response = $this->client((string) config('services.paymob.secret_key'))
+        $response = $this->client((string) $this->settings->value('paymob', 'secret_key', config('services.paymob.secret_key')))
             ->post('/api/acceptance/void_refund/refund', [
                 'transaction_id' => (int) $transactionId,
                 'amount_cents' => (int) $payment->amount,
@@ -103,11 +108,11 @@ final class PaymobGateway implements PaymentGatewayInterface
 
     private function client(string $secretKey): PendingRequest
     {
-        return Http::baseUrl(rtrim((string) config('services.paymob.base_url'), '/'))
+        return Http::baseUrl(rtrim((string) $this->settings->value('paymob', 'base_url', config('services.paymob.base_url')), '/'))
             ->acceptJson()
             ->asJson()
             ->withToken($secretKey, 'Token')
-            ->timeout((int) config('services.paymob.timeout', 15))
+            ->timeout((int) $this->settings->value('paymob', 'timeout', config('services.paymob.timeout', 15)))
             ->retry(2, 250, throw: false);
     }
 

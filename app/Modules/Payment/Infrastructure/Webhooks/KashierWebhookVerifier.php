@@ -2,12 +2,18 @@
 
 namespace App\Modules\Payment\Infrastructure\Webhooks;
 
+use App\Modules\Payment\Infrastructure\Configuration\PaymentGatewaySettings;
+
 final class KashierWebhookVerifier
 {
+    public function __construct(private readonly PaymentGatewaySettings $settings)
+    {
+    }
+
     public function verify(array $payload): bool
     {
         $provided = (string) ($payload['signature'] ?? '');
-        $key = (string) config('services.kashier.payment_api_key');
+        $key = (string) $this->settings->value('kashier', 'payment_api_key', config('services.kashier.payment_api_key'));
         if ($provided === '' || $key === '') {
             return false;
         }

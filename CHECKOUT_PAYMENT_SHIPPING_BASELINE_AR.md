@@ -282,3 +282,32 @@ KASHIER_REDIRECT_URL=https://your-domain.example/payment/return
 [9]: https://developers.kashier.io/docs/api-reference/order-operations/updateOrder "Kashier Refund Order Operation"
 
 [10]: https://developers.kashier.io/docs/get-started/going-live "Kashier Going Live Checklist"
+
+
+## إدارة بوابات الدفع من الإعدادات
+
+تم نقل اختيار وتكوين بوابات الدفع إلى مجموعة الإعدادات:
+
+```text
+Settings API
+    ↓
+payment_gateways
+    ↓
+PaymentGatewaySettings
+    ↓
+PaymentGatewayRouter
+    ↓
+Paymob / Kashier / Cash on Delivery
+```
+
+المفاتيح الحساسة تحمل `is_secret=true`، وتظهر في API كقيمة `********` فقط. إذا أعاد مدير النظام القيمة المقنّعة نفسها فلن يتم استبدال السر المخزن. مفاتيح `.env` ما زالت fallback للترحيل، بينما الإعدادات غير الفارغة هي المصدر التشغيلي الأساسي.
+
+بعد تشغيل migrations وseed يمكن إدارة الإعدادات عبر:
+
+```text
+GET /api/settings/groups/payment_gateways
+PUT /api/settings/payment_gateways.paymob.enabled
+PUT /api/settings/payment_gateways.kashier.enabled
+```
+
+يجب أن يكون المستخدم حاصلًا على `settings.view` للقراءة و`settings.update` للتعديل. يُنصح بقصر صلاحية `settings.update` على Owner/Admin وعدم منحها لموظفي الدعم.

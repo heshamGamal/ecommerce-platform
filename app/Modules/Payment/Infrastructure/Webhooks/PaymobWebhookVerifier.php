@@ -2,11 +2,17 @@
 
 namespace App\Modules\Payment\Infrastructure\Webhooks;
 
+use App\Modules\Payment\Infrastructure\Configuration\PaymentGatewaySettings;
+
 final class PaymobWebhookVerifier
 {
+    public function __construct(private readonly PaymentGatewaySettings $settings)
+    {
+    }
+
     public function verify(array $payload, string $providedHmac): bool
     {
-        $secret = (string) config('services.paymob.hmac_secret');
+        $secret = (string) $this->settings->value('paymob', 'hmac_secret', config('services.paymob.hmac_secret'));
         if ($secret === '' || $providedHmac === '') {
             return false;
         }

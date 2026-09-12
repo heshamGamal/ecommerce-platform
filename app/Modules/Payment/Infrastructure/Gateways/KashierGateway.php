@@ -4,21 +4,26 @@ namespace App\Modules\Payment\Infrastructure\Gateways;
 
 use App\Modules\Payment\Domain\Contracts\PaymentGatewayInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
+use App\Modules\Payment\Infrastructure\Configuration\PaymentGatewaySettings;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 
 final class KashierGateway implements PaymentGatewayInterface
 {
+    public function __construct(private readonly PaymentGatewaySettings $settings)
+    {
+    }
+
     public function supports(string $method): bool
     {
-        return $method === 'kashier' && (bool) config('services.kashier.enabled', false);
+        return $method === 'kashier' && $this->settings->enabled('kashier', (bool) config('services.kashier.enabled', false));
     }
 
     public function createPayment(object $order, string $method, string $idempotencyKey): array
     {
-        $merchantId = (string) config('services.kashier.merchant_id');
-        $secretKey = (string) config('services.kashier.secret_key');
-        $paymentApiKey = (string) config('services.kashier.payment_api_key');
+        $merchantId = (string) $this->settings->value('kashier', 'merchant_id', config('services.kashier.merchant_id'));
+        $secretKey = (string) $this->settings->value('kashier', 'secret_key', config('services.kashier.secret_key'));
+        $paymentApiKey = (string) $this->settings->value('kashier', 'payment_api_key', config('services.kashier.payment_api_key'));
         if ($merchantId === '' || $secretKey === '' || $paymentApiKey === '') {
             throw new PaymentException('Kashier is not configured.');
         }
@@ -33,7 +38,7 @@ final class KashierGateway implements PaymentGatewayInterface
             'amount' => $amount,
             'currency' => (string) $order->currency,
             'order' => $idempotencyKey,
-            'merchantRedirect' => config('services.kashier.redirect_url'),
+            'merchantRedirect' => $this->settings->value('kashier', 'redirect_url', config('services.kashier.redirect_url')),
             'display' => 'en',
             'type' => 'one-time',
             'allowedMethods' => 'card,wallet',
@@ -46,7 +51,7 @@ final class KashierGateway implements PaymentGatewayInterface
             ],
             'interactionSource' => 'ECOMMERCE',
             'enable3DS' => true,
-            'serverWebhook' => config('services.kashier.webhook_url'),
+            'serverWebhook' => $this->settings->value('kashier', 'webhook_url', config('services.kashier.webhook_url')),
         ];
 
         $response = $this->apiClient($secretKey, $paymentApiKey)->post('/v3/payment/sessions', $payload)->throw()->json();
@@ -79,7 +84,7 @@ final class KashierGateway implements PaymentGatewayInterface
         if ($orderId === '') {
             throw new PaymentException('Kashier order reference is missing.');
         }
-        $response = $this->fepClient((string) config('services.kashier.secret_key'))
+        $response = $this->fepClient((string) $this->settings->value('kashier', 'secret_key', config('services.kashier.secret_key')))
             ->put('/v3/orders/' . rawurlencode($orderId), [
                 'apiOperation' => 'REFUND',
                 'reason' => 'Customer refund',
@@ -93,15 +98,15 @@ final class KashierGateway implements PaymentGatewayInterface
 
     private function apiClient(string $secretKey, string $paymentApiKey): PendingRequest
     {
-        return Http::baseUrl(rtrim((string) config('services.kashier.api_base_url'), '/'))
+        return Http::baseUrl(rtrim((string) $this->settings->value('kashier', 'api_base_url', config('services.kashier.api_base_url')), '/'))
             ->acceptJson()->asJson()->withHeaders(['Authorization' => $secretKey, 'api-key' => $paymentApiKey])
-            ->timeout((int) config('services.kashier.timeout', 15))->retry(2, 250, throw: false);
+            ->timeout((int) $this->settings->value('kashier', 'timeout', config('services.kashier.timeout', 15)))->retry(2, 250, throw: false);
     }
 
     private function fepClient(string $secretKey): PendingRequest
     {
-        return Http::baseUrl(rtrim((string) config('services.kashier.fep_base_url'), '/'))
+        return Http::baseUrl(rtrim((string) $this->settings->value('kashier', 'fep_base_url', config('services.kashier.fep_base_url')), '/'))
             ->acceptJson()->asJson()->withHeaders(['Authorization' => $secretKey])
-            ->timeout((int) config('services.kashier.timeout', 15))->retry(2, 250, throw: false);
+            ->timeout((int) $this->settings->value('kashier', 'timeout', config('services.kashier.timeout', 15)))->retry(2, 250, throw: false);
     }
 }

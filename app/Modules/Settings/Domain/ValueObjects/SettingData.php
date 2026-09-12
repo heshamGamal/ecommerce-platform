@@ -10,13 +10,14 @@ final readonly class SettingData
         public mixed $value,
         public string $type = 'string',
         public ?string $description = null,
+        public bool $isSecret = false,
     ) {}
 
     public static function fromArray(array $data): self
     {
         return new self(
             $data['group'], $data['key'], $data['value'],
-            $data['type'] ?? 'string', $data['description'] ?? null,
+            $data['type'] ?? 'string', $data['description'] ?? null, (bool) ($data['is_secret'] ?? false),
         );
     }
 
@@ -24,15 +25,17 @@ final readonly class SettingData
     {
         return new self(
             $setting->group, $setting->key, $setting->getTypedValue(),
-            $setting->type, $setting->description,
+            $setting->type, $setting->description, (bool) ($setting->is_secret ?? false),
         );
     }
 
     public function toArray(): array
     {
         return [
-            'group' => $this->group, 'key' => $this->key, 'value' => $this->value,
+            'group' => $this->group, 'key' => $this->key,
+            'value' => $this->isSecret ? '********' : $this->value,
             'type' => $this->type, 'description' => $this->description,
+            'is_secret' => $this->isSecret,
         ];
     }
 }
