@@ -22,4 +22,5 @@ class Shipment extends Model
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function method(): BelongsTo { return $this->belongsTo(ShippingMethod::class, 'shipping_method_id'); }
     public function events(): HasMany { return $this->hasMany(ShipmentEvent::class); }
+    public function operations(): HasMany { return $this->hasMany(ShipmentOperation::class); }
 }

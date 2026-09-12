@@ -6,6 +6,7 @@ use App\Models\PaymentWebhookEvent;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
 use App\Modules\Order\Domain\Contracts\TransactionManagerInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
+use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
 use App\Modules\Payment\Infrastructure\Webhooks\PaymobWebhookVerifier;
 use Illuminate\Database\QueryException;
@@ -14,6 +15,7 @@ final class ProcessPaymobWebhook
 {
     public function __construct(
         private readonly PaymentRepositoryInterface $payments,
+        private readonly PaymentOperationRepositoryInterface $operations,
         private readonly OrderRepositoryInterface $orders,
         private readonly TransactionManagerInterface $transactions,
         private readonly PaymobWebhookVerifier $verifier,
@@ -52,24 +54,28 @@ final class ProcessPaymobWebhook
                 'payload' => $payload,
             ]);
         } catch (QueryException $exception) {
-            if (PaymentWebhookEvent::query()->where('provider', 'paymob')->where('event_id', $eventId)->exists()) {
+            $existingEvent = PaymentWebhookEvent::query()->where('provider', 'paymob')->where('event_id', $eventId)->first();
+            if ($existingEvent?->status === 'processed') {
                 return null;
             }
-            throw $exception;
+            if ($existingEvent === null) {
+                throw $exception;
+            }
         }
 
         $pending = (bool) ($object['pending'] ?? false);
-        $status = $pending ? 'pending' : ((bool) ($object['success'] ?? false) ? 'paid' : 'failed');
+        $status = $pending ? 'pending' : ((bool) ($object['success'] ?? false) ? 'confirmed' : 'failed');
         $metadata = array_merge((array) $payment->metadata, [
             'provider' => 'paymob',
             'transaction_id' => $reference,
             'webhook' => $payload,
         ]);
 
-        $result = $this->transactions->run(function () use ($payment, $status, $metadata, $eventId): object {
+        $result = $this->transactions->run(function () use ($payment, $status, $metadata, $eventId, $reference, $payload): object {
             $locked = $this->payments->findForUpdate((int) $payment->id);
             $updated = $this->payments->updateStatus($locked, $status, ['metadata' => $metadata]);
-            if ($status === 'paid' && $updated->order->status === 'pending') {
+            $this->operations->complete((int) $updated->id, 'create', $status === 'confirmed' ? 'confirmed' : ($status === 'failed' ? 'failed' : 'processing'), $reference, $payload);
+            if ($status === 'confirmed' && $updated->order->status === 'pending') {
                 $this->orders->updateStatus((int) $updated->order_id, 'confirmed');
             }
             PaymentWebhookEvent::query()->where('provider', 'paymob')->where('event_id', $eventId)->update([

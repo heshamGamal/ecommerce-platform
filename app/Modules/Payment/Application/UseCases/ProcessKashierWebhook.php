@@ -6,6 +6,7 @@ use App\Models\PaymentWebhookEvent;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
 use App\Modules\Order\Domain\Contracts\TransactionManagerInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
+use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
 use App\Modules\Payment\Infrastructure\Webhooks\KashierWebhookVerifier;
 use Illuminate\Database\QueryException;
@@ -14,6 +15,7 @@ final class ProcessKashierWebhook
 {
     public function __construct(
         private readonly PaymentRepositoryInterface $payments,
+        private readonly PaymentOperationRepositoryInterface $operations,
         private readonly OrderRepositoryInterface $orders,
         private readonly TransactionManagerInterface $transactions,
         private readonly KashierWebhookVerifier $verifier,
@@ -48,14 +50,17 @@ final class ProcessKashierWebhook
                 'payload' => $payload,
             ]);
         } catch (QueryException $exception) {
-            if (PaymentWebhookEvent::query()->where('provider', 'kashier')->where('event_id', $eventId)->exists()) {
+            $existingEvent = PaymentWebhookEvent::query()->where('provider', 'kashier')->where('event_id', $eventId)->first();
+            if ($existingEvent?->status === 'processed') {
                 return null;
             }
-            throw $exception;
+            if ($existingEvent === null) {
+                throw $exception;
+            }
         }
 
         $paid = strtoupper((string) ($payload['paymentStatus'] ?? '')) === 'SUCCESS';
-        $status = $paid ? 'paid' : 'failed';
+        $status = $paid ? 'confirmed' : 'failed';
         $metadata = array_merge((array) $payment->metadata, [
             'provider' => 'kashier',
             'transaction_id' => $payload['transactionId'] ?? null,
@@ -63,10 +68,11 @@ final class ProcessKashierWebhook
             'webhook' => $payload,
         ]);
 
-        return $this->transactions->run(function () use ($payment, $status, $metadata, $eventId): object {
+        return $this->transactions->run(function () use ($payment, $status, $metadata, $eventId, $payload): object {
             $locked = $this->payments->findForUpdate((int) $payment->id);
             $updated = $this->payments->updateStatus($locked, $status, ['metadata' => $metadata]);
-            if ($status === 'paid' && $updated->order->status === 'pending') {
+            $this->operations->complete((int) $updated->id, 'create', $status === 'confirmed' ? 'confirmed' : 'failed', (string) ($payload['transactionId'] ?? $payload['orderId'] ?? ''), $payload);
+            if ($status === 'confirmed' && $updated->order->status === 'pending') {
                 $this->orders->updateStatus((int) $updated->order_id, 'confirmed');
             }
             PaymentWebhookEvent::query()->where('provider', 'kashier')->where('event_id', $eventId)->update([

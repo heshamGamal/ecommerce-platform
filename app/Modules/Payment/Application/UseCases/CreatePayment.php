@@ -7,6 +7,7 @@ use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentGatewayInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
+use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
 use App\Modules\Payment\Domain\Exceptions\PaymentFailedException;
@@ -19,6 +20,7 @@ final class CreatePayment
         private readonly AuthenticationServiceInterface $authentication,
         private readonly OrderRepositoryInterface $orders,
         private readonly PaymentRepositoryInterface $payments,
+        private readonly PaymentOperationRepositoryInterface $operations,
         private readonly PaymentGatewayInterface $gateway,
     ) {}
 
@@ -52,28 +54,42 @@ final class CreatePayment
             if ($claim->payment->order_id !== $order->id || $claim->payment->user_id !== $user->id) {
                 throw new PaymentException('Idempotency key belongs to another order.');
             }
-            if (in_array($claim->payment->status, ['pending', 'paid', 'refunded', 'failed'], true)) {
+            if (in_array($claim->payment->status, ['pending', 'provider_created', 'confirmed', 'paid', 'refunded', 'failed'], true)) {
                 return $claim->payment;
             }
-            throw new PaymentInProgressException('Payment is already being initiated. Retry with the same idempotency key.');
+            if (! in_array($claim->payment->status, ['processing', 'initiating'], true)) {
+                throw new PaymentInProgressException('Payment is already being initiated. Retry with the same idempotency key.');
+            }
         }
+
+        $previousResult = $this->operations->successfulResponse((int) $claim->payment->id, 'create');
+        if ($previousResult !== null) {
+            return $this->payments->updateStatus($claim->payment, $previousResult['_operation_status'] ?? 'provider_created', [
+                'provider_reference' => $previousResult['provider_reference'] ?? null,
+                'metadata' => $previousResult['metadata'] ?? $claim->payment->metadata,
+            ]);
+        }
+        $this->operations->start((int) $claim->payment->id, 'create', $data->idempotencyKey);
 
         try {
             $result = $this->gateway->createPayment($order, $data->method, $data->idempotencyKey);
             if (($result['status'] ?? null) === 'failed') {
                 throw new PaymentFailedException('Payment creation failed.');
             }
+            $paymentStatus = ($result['status'] ?? null) === 'paid' ? 'confirmed' : (($result['provider_reference'] ?? null) !== null ? 'provider_created' : 'pending');
+            $this->operations->complete((int) $claim->payment->id, 'create', $paymentStatus, $result['provider_reference'] ?? null, $result);
         } catch (\Throwable $exception) {
-            $this->payments->updateStatus($claim->payment, 'failed', [
+            $this->operations->fail((int) $claim->payment->id, 'create', $exception->getMessage(), ! ($exception instanceof PaymentFailedException));
+            $this->payments->updateStatus($claim->payment, $exception instanceof PaymentFailedException ? 'failed' : 'processing', [
                 'metadata' => [
                     'failure' => $exception->getMessage(),
-                    'reconciliation_required' => true,
+                    'reconciliation_required' => ! ($exception instanceof PaymentFailedException),
                 ],
             ]);
             throw $exception;
         }
 
-        return $this->payments->updateStatus($claim->payment, $result['status'], [
+        return $this->payments->updateStatus($claim->payment, $paymentStatus, [
             'provider_reference' => $result['provider_reference'] ?? null,
             'metadata' => $result['metadata'] ?? null,
         ]);

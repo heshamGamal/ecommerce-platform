@@ -10,6 +10,7 @@ use App\Modules\Shipping\Domain\Contracts\ShippingMethodRepositoryInterface;
 use App\Modules\Shipping\Domain\Contracts\ShippingRateCalculatorInterface;
 use App\Modules\Shipping\Domain\Contracts\ShipmentRepositoryInterface;
 use App\Modules\Shipping\Domain\Contracts\ShippingProviderInterface;
+use App\Modules\Shipping\Domain\Contracts\ShipmentOperationRepositoryInterface;
 use App\Modules\Shipping\Domain\Exceptions\ShippingException;
 
 final class CreateShipment
@@ -21,6 +22,7 @@ final class CreateShipment
         private readonly ShippingRateCalculatorInterface $rates,
         private readonly ShipmentRepositoryInterface $shipments,
         private readonly ShippingProviderInterface $providers,
+        private readonly ShipmentOperationRepositoryInterface $operations,
     ) {}
 
     public function execute(int $orderId, CreateShipmentData $data): object
@@ -57,6 +59,18 @@ final class CreateShipment
         if (! $this->providers->supports($shipment) || data_get($shipment->metadata, 'provider_reference')) {
             return $shipment;
         }
-        return $this->shipments->updateProviderData($shipment, $this->providers->create($shipment));
+        $previousResult = $this->operations->successfulResponse((int) $shipment->id, 'create');
+        if ($previousResult !== null) {
+            return $this->shipments->updateProviderData($shipment, $previousResult);
+        }
+        $this->operations->start((int) $shipment->id, 'create', $shipment->idempotency_key);
+        try {
+            $result = $this->providers->create($shipment);
+            $this->operations->complete((int) $shipment->id, 'create', ($result['tracking_number'] ?? null) !== null ? 'provider_created' : 'pending', data_get($result, 'metadata.provider_reference'), $result);
+            return $this->shipments->updateProviderData($shipment, $result);
+        } catch (\Throwable $exception) {
+            $this->operations->fail((int) $shipment->id, 'create', $exception->getMessage());
+            throw $exception;
+        }
     }
 }

@@ -21,7 +21,7 @@ final class RefundPayment
     public function execute(int $paymentId): object
     {
         $payment = $this->payments->find($paymentId);
-        if ($payment->status !== 'paid') {
+        if (! in_array($payment->status, ['paid', 'confirmed'], true)) {
             throw InvalidPaymentTransitionException::from($payment->status, 'refunded');
         }
         $result = $this->gateway->refundPayment($payment);
@@ -31,7 +31,7 @@ final class RefundPayment
 
         return $this->transactions->run(function () use ($paymentId, $payment, $result): object {
             $locked = $this->payments->findForUpdate($paymentId);
-            if ($locked->status !== 'paid') {
+            if (! in_array($locked->status, ['paid', 'confirmed'], true)) {
                 throw InvalidPaymentTransitionException::from($locked->status, 'refunded');
             }
             $refunded = $this->payments->updateStatus($locked, 'refunded', [

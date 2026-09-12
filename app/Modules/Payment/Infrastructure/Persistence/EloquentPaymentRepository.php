@@ -92,7 +92,7 @@ final class EloquentPaymentRepository implements PaymentRepositoryInterface
             try {
                 $payment = Payment::query()->create(array_merge($attributes, [
                     'idempotency_key' => $idempotencyKey,
-                    'status' => 'initiating',
+                    'status' => 'processing',
                 ]))->load('order');
 
                 return new PaymentClaim($payment, true);

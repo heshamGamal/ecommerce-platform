@@ -47,6 +47,7 @@ final class EloquentShipmentRepository implements ShipmentRepositoryInterface
     {
         $shipment->update([
             'tracking_number' => $data['tracking_number'] ?? $shipment->tracking_number,
+            'status' => ($data['tracking_number'] ?? null) !== null ? 'provider_created' : $shipment->status,
             'metadata' => array_merge((array) $shipment->metadata, (array) ($data['metadata'] ?? [])),
         ]);
         return $shipment->fresh(['order', 'method', 'events']);
@@ -68,7 +69,7 @@ final class EloquentShipmentRepository implements ShipmentRepositoryInterface
         return DB::transaction(function () use ($shipment, $status, $actorId, $note): Shipment {
             $locked = Shipment::query()->lockForUpdate()->find($shipment->id);
             if ($locked === null) throw new ShipmentNotFoundException('Shipment not found.');
-            $allowed = ['pending' => ['picked_up', 'cancelled'], 'picked_up' => ['in_transit', 'cancelled'], 'in_transit' => ['out_for_delivery', 'cancelled'], 'out_for_delivery' => ['delivered'], 'delivered' => [], 'cancelled' => []];
+            $allowed = ['pending' => ['provider_created', 'picked_up', 'cancelled'], 'provider_created' => ['picked_up', 'cancelled'], 'picked_up' => ['in_transit', 'cancelled'], 'in_transit' => ['out_for_delivery', 'cancelled'], 'out_for_delivery' => ['delivered'], 'delivered' => [], 'cancelled' => []];
             if (!in_array($status, $allowed[$locked->status] ?? [], true)) throw InvalidShipmentTransitionException::from($locked->status, $status);
             $from = $locked->status;
             $locked->update(['status' => $status]);

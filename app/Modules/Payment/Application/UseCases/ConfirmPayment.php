@@ -22,24 +22,24 @@ final class ConfirmPayment
     public function execute(int $paymentId): object
     {
         $payment = $this->payments->find($paymentId);
-        if ($payment->status !== 'pending') {
-            throw InvalidPaymentTransitionException::from($payment->status, 'paid');
+        if (! in_array($payment->status, ['pending', 'processing'], true)) {
+            throw InvalidPaymentTransitionException::from($payment->status, 'confirmed');
         }
         $order = $this->orders->find($payment->order_id);
         if (! in_array($order->status, ['pending', 'confirmed', 'processing'], true)) {
             throw new PaymentException('Payment cannot be confirmed for this order.');
         }
         $result = $this->gateway->confirmPayment($payment);
-        if (($result['status'] ?? null) !== 'paid') {
+        if (! in_array(($result['status'] ?? null), ['paid', 'confirmed'], true)) {
             throw new PaymentFailedException('Payment confirmation failed.');
         }
 
         return $this->transactions->run(function () use ($paymentId, $order, $result): object {
             $locked = $this->payments->findForUpdate($paymentId);
-            if ($locked->status !== 'pending') {
-                throw InvalidPaymentTransitionException::from($locked->status, 'paid');
+            if (! in_array($locked->status, ['pending', 'processing'], true)) {
+                throw InvalidPaymentTransitionException::from($locked->status, 'confirmed');
             }
-            $confirmed = $this->payments->updateStatus($locked, 'paid', [
+            $confirmed = $this->payments->updateStatus($locked, 'confirmed', [
                 'provider_reference' => $result['provider_reference'] ?? $locked->provider_reference,
                 'metadata' => $result['metadata'] ?? $locked->metadata,
             ]);

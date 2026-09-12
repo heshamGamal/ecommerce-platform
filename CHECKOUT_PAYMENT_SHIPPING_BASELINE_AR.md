@@ -388,3 +388,53 @@ shipping_providers.bosta.package_type
 [12]: https://docs.bosta.co/docs/how-to/get-your-api-key/ "Bosta API Key"
 
 [13]: https://docs.bosta.co/docs/how-to/get-delivery-status-via-webhook/ "Bosta Delivery Status Webhook"
+
+
+## External API وDB Transaction: التصميم الموزع
+
+لا يتم وضع استدعاء Paymob أو Kashier أو Bosta داخل Database Transaction. العملية أصبحت مقسمة إلى:
+
+```text
+pending
+    ↓
+processing
+    ↓
+provider_created
+    ↓
+confirmed
+```
+
+وعند فشل مؤكد من المزوّد تصبح:
+
+```text
+failed
+```
+
+أما timeout أو network failure أو فشل تحديث محلي بعد نجاح خارجي، فيبقى السجل في `processing` مع `reconciliation_required` بدل ادعاء أن العملية فشلت. هذا يمنع تحصيل المال مرتين ويترك العملية قابلة للإعادة بنفس `idempotency_key`.
+
+تمت إضافة جداول durable:
+
+```text
+payment_operations
+shipment_operations
+```
+
+وتسجل كل واحدة:
+
+- عدد المحاولات.
+- حالة العملية.
+- provider reference.
+- response payload.
+- آخر خطأ.
+- وقت retry التالي.
+- مفتاح idempotency.
+
+### Webhook Recovery
+
+إذا نجح Paymob أو Kashier أو Bosta ثم فشل تحديث قاعدة البيانات، لا يتم اعتبار Webhook منتهيًا بمجرد استلامه. يبقى الحدث `received`، وتقوم إعادة Webhook بمعالجة الحدث مرة أخرى. لا يتم تجاهل الحدث إلا بعد تسجيله `processed` داخل نفس المسار المحلي.
+
+### Retry
+
+إعادة طلب إنشاء Payment أو Shipment بنفس `idempotency_key` لا تنشئ عملية جديدة. Payment الموجود في `processing` يعيد المحاولة، أما `provider_created` أو `confirmed` فيُعاد كما هو. وبالنسبة للشحن، تتم إعادة محاولة dispatch فقط عندما لا يوجد `provider_reference`.
+
+تم تجهيز `next_retry_at` في جداول العمليات لتوصيلها لاحقًا بـ Queue Job أو Outbox Worker دون تغيير الـ Domain contracts. المرحلة التالية للإنتاج هي إضافة Outbox Transactional Event وQueue Worker يعتمد على هذه السجلات، مع reconciliation polling للمزوّدين الذين لا يرسلون Webhook.
