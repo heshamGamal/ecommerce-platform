@@ -5,6 +5,7 @@ use App\Modules\Catalog\Presentation\Http\Controllers\BrandController;
 use App\Modules\Catalog\Presentation\Http\Controllers\CategoryController;
 use App\Modules\Catalog\Presentation\Http\Controllers\ProductController;
 use App\Modules\Catalog\Presentation\Http\Controllers\ProductMediaController;
+use App\Modules\Catalog\Presentation\Http\Controllers\ProductReviewController;
 use App\Modules\Customer\Presentation\Http\Controllers\CustomerController;
 use App\Modules\Customer\Presentation\Http\Controllers\CustomerFeaturesController;
 use App\Modules\Settings\Presentation\Http\Controllers\SettingsController;
@@ -86,6 +87,10 @@ Route::middleware('auth')->group(function () {
     Route::post('products/{product}/variants/{variant}/media', [ProductMediaController::class, 'variantStore'])->name('products.variants.media.store');
     Route::delete('products/{product}/variants/{variant}/media/{media}', [ProductMediaController::class, 'variantDestroy'])->name('products.variants.media.destroy');
     Route::patch('products/{product}/variants/{variant}/media/{media}/order', [ProductMediaController::class, 'variantReorder'])->name('products.variants.media.reorder');
+    Route::get('products/{product}/reviews', [ProductReviewController::class, 'index'])->name('customer.reviews.index');
+    Route::post('products/{product}/reviews', [ProductReviewController::class, 'store'])->name('customer.reviews.store');
+    Route::get('reviews', [ProductReviewController::class, 'adminIndex'])->name('reviews.index');
+    Route::patch('reviews/{review}/moderate', [ProductReviewController::class, 'moderate'])->name('reviews.moderate');
 
     Route::get('attributes', [AttributeController::class, 'index'])->name('attributes.index');
     Route::post('attributes', [AttributeController::class, 'store'])->name('attributes.store');
