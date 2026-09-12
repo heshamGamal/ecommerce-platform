@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\CustomerOrder;
 use App\Models\Role;
+use App\Models\Shipment;
 use App\Models\ShippingMethod;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
@@ -61,6 +62,31 @@ final class ShippingApiTest extends TestCase
         $this->actingAs($owner)->patchJson("/api/shipments/{$shipment->id}/status", ['status' => 'picked_up'])
             ->assertOk()->assertJsonPath('data.status', 'picked_up');
         $this->actingAs($owner)->deleteJson('/api/shipping-methods/' . $deletable['id'])->assertNoContent();
+    }
+
+    public function test_delivered_shipment_completes_shipped_order(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $owner = $this->userWithRole('owner');
+        $method = ShippingMethod::query()->create([
+            'code' => 'delivery', 'name' => 'Delivery', 'base_fee' => 100,
+            'currency' => 'EGP', 'is_active' => true,
+        ]);
+        $order = CustomerOrder::query()->create([
+            'user_id' => $owner->id, 'status' => 'shipped',
+            'total_amount' => 1000, 'currency' => 'EGP',
+            'shipping_address' => ['city' => 'Cairo'],
+        ]);
+        $shipment = Shipment::query()->create([
+            'order_id' => $order->id, 'user_id' => $owner->id,
+            'shipping_method_id' => $method->id, 'method_code' => $method->code,
+            'fee' => 100, 'currency' => 'EGP', 'status' => 'out_for_delivery',
+            'address_snapshot' => ['city' => 'Cairo'], 'idempotency_key' => 'delivery-order',
+        ]);
+
+        $this->actingAs($owner)->patchJson("/api/shipments/{$shipment->id}/status", ['status' => 'delivered'])
+            ->assertOk()->assertJsonPath('data.status', 'delivered');
+        $this->assertDatabaseHas('customer_orders', ['id' => $order->id, 'status' => 'delivered']);
     }
 
     private function userWithRole(string $role): User
