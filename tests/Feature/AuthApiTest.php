@@ -87,6 +87,27 @@ class AuthApiTest extends TestCase
         ])->assertStatus(429);
     }
 
+    public function test_requests_receive_and_propagate_a_correlation_id(): void
+    {
+        $this->getJson('/api/auth/me')
+            ->assertUnauthorized()
+            ->assertHeader('X-Correlation-ID');
+
+        $this->withHeader('X-Correlation-ID', 'request-123')
+            ->getJson('/api/auth/me')
+            ->assertUnauthorized()
+            ->assertHeader('X-Correlation-ID', 'request-123');
+    }
+
+    public function test_registration_attempts_are_rate_limited(): void
+    {
+        foreach (range(1, 3) as $_) {
+            $this->postJson('/api/auth/register', [])->assertUnprocessable();
+        }
+
+        $this->postJson('/api/auth/register', [])->assertStatus(429);
+    }
+
     public function test_role_permissions_and_direct_denials_are_enforced(): void
     {
         $admin = $this->createAdminUser();

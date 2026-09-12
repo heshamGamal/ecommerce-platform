@@ -1,5 +1,6 @@
 <?php
 use App\Models\Setting;
+use App\Http\Middleware\AssignCorrelationId;
 use App\Modules\Catalog\Domain\Exceptions\AttributeNotFoundException;
 use App\Modules\Catalog\Domain\Exceptions\AttributeValueNotFoundException;
 use App\Modules\Catalog\Domain\Exceptions\BrandNotFoundException;
@@ -48,8 +49,8 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 return Application::configure(basePath: dirname(__DIR__))
  ->withRouting(web:__DIR__.'/../routes/web.php',api:__DIR__.'/../routes/api.php',commands:__DIR__.'/../routes/console.php',health:'/up')
  ->withCommands([__DIR__.'/../app/Console/Commands/DispatchOutbox.php',__DIR__.'/../app/Console/Commands/ReconcileStalePayments.php',__DIR__.'/../app/Console/Commands/VerifyProviderSandbox.php',__DIR__.'/../app/Console/Commands/ReconcileStaleShipments.php'])
- ->withMiddleware(function(Middleware $middleware):void{})
- ->withSchedule(function(Schedule $schedule):void{$time='00:30';try{$configured=Setting::query()->where('key','cart.abandoned_scan_time')->value('value');if(is_string($configured)&&preg_match('/^([01]\d|2[0-3]):[0-5]\d$/',$configured))$time=$configured;}catch(\Throwable $e){}$schedule->command('cart:mark-abandoned')->dailyAt($time);$schedule->command('outbox:dispatch')->everyMinute();$schedule->command('payments:reconcile')->everyFiveMinutes();$schedule->command('shipments:reconcile')->everyTenMinutes();})
+ ->withMiddleware(function(Middleware $middleware):void{$middleware->append(AssignCorrelationId::class);})
+ ->withSchedule(function(Schedule $schedule):void{$time='00:30';try{$configured=Setting::query()->where('key','cart.abandoned_scan_time')->value('value');if(is_string($configured)&&preg_match('/^([01]\d|2[0-3]):[0-5]\d$/',$configured))$time=$configured;}catch(\Throwable $e){}$schedule->command('cart:mark-abandoned')->dailyAt($time)->withoutOverlapping();$schedule->command('outbox:dispatch')->everyMinute()->withoutOverlapping();$schedule->command('payments:reconcile')->everyFiveMinutes()->withoutOverlapping();$schedule->command('shipments:reconcile')->everyTenMinutes()->withoutOverlapping();})
  ->withExceptions(function(Exceptions $exceptions):void{
   $exceptions->shouldRenderJsonWhen(fn(Request $request)=>$request->is('api/*')||$request->expectsJson());
   $exceptions->render(function(AuthenticationException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>'Unauthenticated.'],401);});

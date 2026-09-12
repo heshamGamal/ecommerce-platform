@@ -24,11 +24,11 @@ use App\Modules\Promotion\Presentation\Http\Controllers\CouponController;
 use App\Modules\Tax\Presentation\Http\Controllers\TaxRuleController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('auth/register', [AuthController::class, 'register'])->middleware('guest')->name('auth.register');
+Route::post('auth/register', [AuthController::class, 'register'])->middleware(['guest', 'throttle:auth-register'])->name('auth.register');
 Route::post('auth/login', [AuthController::class, 'login'])->middleware(['guest', 'throttle:auth-login'])->name('auth.login');
-Route::post('webhooks/paymob', PaymobWebhookController::class)->name('webhooks.paymob');
-Route::post('webhooks/kashier', KashierWebhookController::class)->name('webhooks.kashier');
-Route::post('webhooks/bosta', BostaWebhookController::class)->name('webhooks.bosta');
+Route::post('webhooks/paymob', PaymobWebhookController::class)->middleware('throttle:payment-webhook')->name('webhooks.paymob');
+Route::post('webhooks/kashier', KashierWebhookController::class)->middleware('throttle:payment-webhook')->name('webhooks.kashier');
+Route::post('webhooks/bosta', BostaWebhookController::class)->middleware('throttle:shipping-webhook')->name('webhooks.bosta');
 Route::middleware('auth')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
     Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
