@@ -49,7 +49,8 @@ Route::middleware('auth')->group(function () {
     Route::get('customer/cart', [CustomerFeaturesController::class, 'cart'])->name('customer.cart.show');
     Route::post('customer/cart/items', [CustomerFeaturesController::class, 'addCartItem'])->name('customer.cart.items.store');
     Route::patch('customer/cart/items', [CustomerFeaturesController::class, 'updateCartItem'])->name('customer.cart.items.update');
-    Route::delete('customer/cart/items/{productId}', [CustomerFeaturesController::class, 'removeCartItem'])->name('customer.cart.items.destroy');
+    Route::delete('customer/cart', [CustomerFeaturesController::class, 'clearCart'])->name('customer.cart.clear');
+    Route::delete('customer/cart/items/{productId}/{variantId?}', [CustomerFeaturesController::class, 'removeCartItem'])->name('customer.cart.items.destroy');
     Route::get('customer/wishlist', [CustomerFeaturesController::class, 'wishlist'])->name('customer.wishlist.index');
     Route::post('customer/wishlist', [CustomerFeaturesController::class, 'addWishlist'])->name('customer.wishlist.store');
     Route::delete('customer/wishlist/{productId}', [CustomerFeaturesController::class, 'removeWishlist'])->name('customer.wishlist.destroy');
