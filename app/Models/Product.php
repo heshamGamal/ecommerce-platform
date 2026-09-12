@@ -12,8 +12,13 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'slug', 'description', 'type', 'status', 'brand_id', 'category_id',
+        'name', 'slug', 'description', 'type', 'status', 'price', 'brand_id', 'category_id',
     ];
+
+    protected function casts(): array
+    {
+        return ['price' => 'integer'];
+    }
 
     public function brand(): BelongsTo
     {

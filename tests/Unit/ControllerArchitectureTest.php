@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 class ControllerArchitectureTest extends TestCase
 {
     #[DataProvider('controllerProvider')]
-    public function test_catalog_and_settings_controllers_do_not_depend_on_repositories(string $controller): void
+    public function test_controllers_do_not_depend_on_repositories(string $controller): void
     {
         $source = file_get_contents($controller);
 
@@ -25,6 +25,7 @@ class ControllerArchitectureTest extends TestCase
             glob($root.'/Auth/Presentation/Http/Controllers/*.php') ?: [],
             glob($root.'/Catalog/Presentation/Http/Controllers/*.php') ?: [],
             glob($root.'/Settings/Presentation/Http/Controllers/*.php') ?: [],
+            glob($root.'/Order/Presentation/Http/Controllers/*.php') ?: [],
         );
 
         $cases = [];

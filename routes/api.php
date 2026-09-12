@@ -9,6 +9,8 @@ use App\Modules\Customer\Presentation\Http\Controllers\CustomerFeaturesControlle
 use App\Modules\Settings\Presentation\Http\Controllers\SettingsController;
 use App\Modules\Staff\Presentation\Http\Controllers\StaffController;
 use App\Modules\Inventory\Presentation\Http\Controllers\InventoryController;
+use App\Modules\Order\Presentation\Http\Controllers\CheckoutController;
+use App\Modules\Order\Presentation\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('auth/register', [AuthController::class, 'register'])->middleware('guest')->name('auth.register');
@@ -33,7 +35,10 @@ Route::middleware('auth')->group(function () {
     Route::post('customer/addresses', [CustomerFeaturesController::class, 'addAddress'])->name('customer.addresses.store');
     Route::match(['put', 'patch'], 'customer/addresses/{id}', [CustomerFeaturesController::class, 'updateAddress'])->name('customer.addresses.update');
     Route::delete('customer/addresses/{id}', [CustomerFeaturesController::class, 'deleteAddress'])->name('customer.addresses.destroy');
-    Route::get('customer/orders', [CustomerFeaturesController::class, 'orders'])->name('customer.orders.index');
+    Route::get('customer/orders', [OrderController::class, 'customerIndex'])->name('customer.orders.index');
+    Route::get('customer/orders/{id}', [OrderController::class, 'customerShow'])->name('customer.orders.show');
+    Route::post('customer/orders/{id}/cancel', [OrderController::class, 'customerCancel'])->name('customer.orders.cancel');
+    Route::post('customer/checkout', CheckoutController::class)->name('customer.checkout');
     Route::get('customer/cart', [CustomerFeaturesController::class, 'cart'])->name('customer.cart.show');
     Route::post('customer/cart/items', [CustomerFeaturesController::class, 'addCartItem'])->name('customer.cart.items.store');
     Route::patch('customer/cart/items', [CustomerFeaturesController::class, 'updateCartItem'])->name('customer.cart.items.update');
@@ -76,4 +81,8 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/groups/{group}', [SettingsController::class, 'group'])->name('settings.group');
     Route::get('settings/{key}', [SettingsController::class, 'show'])->name('settings.show');
     Route::put('settings/{key?}', [SettingsController::class, 'update'])->name('settings.update');
+    Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+    Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
+    Route::post('orders/{id}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
 });
