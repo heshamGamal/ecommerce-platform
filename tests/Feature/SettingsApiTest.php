@@ -96,4 +96,15 @@ class SettingsApiTest extends TestCase
             'group' => 'store', 'value' => 'Updated', 'type' => 'string',
         ])->assertOk();
     }
+
+    public function test_abandoned_cart_scan_time_accepts_valid_time_and_rejects_invalid_time(): void
+    {
+        $this->actingAs($this->admin)->putJson('/api/settings/cart.abandoned_scan_time', [
+            'group' => 'cart', 'value' => '02:15', 'type' => 'string',
+        ])->assertOk()->assertJsonPath('data.value', '02:15');
+
+        $this->actingAs($this->admin)->putJson('/api/settings/cart.abandoned_scan_time', [
+            'group' => 'cart', 'value' => '25:99', 'type' => 'string',
+        ])->assertUnprocessable()->assertJsonValidationErrors('value');
+    }
 }

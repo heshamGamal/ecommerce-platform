@@ -27,6 +27,7 @@ class UpdateSettingsRequest extends FormRequest
                 Rule::when($this->input('type') === 'integer', ['integer']),
                 Rule::when($this->input('type') === 'float', ['numeric']),
                 Rule::when($this->input('type') === 'json', ['array']),
+                Rule::when($this->input('key') === 'cart.abandoned_scan_time', ['date_format:H:i']),
             ],
             'type' => ['required', Rule::in(['string', 'boolean', 'integer', 'float', 'json'])],
             'description' => ['nullable', 'string'],

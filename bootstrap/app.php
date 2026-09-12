@@ -1,4 +1,5 @@
 <?php
+use App\Models\Setting;
 use App\Modules\Catalog\Domain\Exceptions\AttributeNotFoundException;
 use App\Modules\Catalog\Domain\Exceptions\AttributeValueNotFoundException;
 use App\Modules\Catalog\Domain\Exceptions\BrandNotFoundException;
@@ -46,7 +47,7 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 return Application::configure(basePath: dirname(__DIR__))
  ->withRouting(web:__DIR__.'/../routes/web.php',api:__DIR__.'/../routes/api.php',commands:__DIR__.'/../routes/console.php',health:'/up')
  ->withMiddleware(function(Middleware $middleware):void{})
- ->withSchedule(function(Schedule $schedule):void{$schedule->command('cart:mark-abandoned')->dailyAt('00:30');})
+ ->withSchedule(function(Schedule $schedule):void{$time='00:30';try{$configured=Setting::query()->where('key','cart.abandoned_scan_time')->value('value');if(is_string($configured)&&preg_match('/^([01]\d|2[0-3]):[0-5]\d$/',$configured))$time=$configured;}catch(\Throwable $e){}$schedule->command('cart:mark-abandoned')->dailyAt($time);})
  ->withExceptions(function(Exceptions $exceptions):void{
   $exceptions->shouldRenderJsonWhen(fn(Request $request)=>$request->is('api/*')||$request->expectsJson());
   $exceptions->render(function(AuthenticationException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>'Unauthenticated.'],401);});
