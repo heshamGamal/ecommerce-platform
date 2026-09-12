@@ -14,9 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 final class EloquentOrderRepository implements OrderRepositoryInterface
 {
-    public function __construct(private readonly InventoryRepositoryInterface $inventory)
-    {
-    }
+    public function __construct(private readonly InventoryRepositoryInterface $inventory) {}
 
     public function listForUser(int $userId): iterable
     {
@@ -34,6 +32,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         if ($order === null) {
             throw new OrderNotFoundException('Order not found.');
         }
+
         return $order;
     }
 
@@ -43,6 +42,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         if ($order === null) {
             throw new OrderNotFoundException('Order not found.');
         }
+
         return $order;
     }
 
@@ -62,7 +62,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
                 'cancelled' => [],
                 'refunded' => [],
             ];
-            if (!in_array($status, $allowed[$order->status] ?? [], true)) {
+            if (! in_array($status, $allowed[$order->status] ?? [], true)) {
                 throw InvalidOrderStatusTransitionException::from($order->status, $status);
             }
             if ($status === 'shipped') {
@@ -71,6 +71,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
                 }
             }
             $order->update(['status' => $status]);
+
             return $order->fresh(['user', 'items.product']);
         });
     }
@@ -82,13 +83,33 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             if ($order === null) {
                 throw new OrderNotFoundException('Order not found.');
             }
-            if (!in_array($order->status, ['pending', 'confirmed', 'processing'], true)) {
+            if (! in_array($order->status, ['pending', 'confirmed', 'processing'], true)) {
                 throw new OrderActionNotAllowedException('This order can no longer be cancelled.');
             }
             foreach ($order->items as $item) {
                 $this->inventory->release($item->product_id, $item->variant_id, $item->quantity);
             }
             $order->update(['status' => 'cancelled']);
+
+            return $order->fresh(['items.product', 'items.variant']);
+        });
+    }
+
+    public function cancel(int $orderId): object
+    {
+        return DB::transaction(function () use ($orderId): object {
+            $order = CustomerOrder::query()->lockForUpdate()->find($orderId);
+            if ($order === null) {
+                throw new OrderNotFoundException('Order not found.');
+            }
+            if (! in_array($order->status, ['pending', 'confirmed', 'processing'], true)) {
+                throw new OrderActionNotAllowedException('This order can no longer be cancelled.');
+            }
+            foreach ($order->items as $item) {
+                $this->inventory->release($item->product_id, $item->variant_id, $item->quantity);
+            }
+            $order->update(['status' => 'cancelled']);
+
             return $order->fresh(['items.product', 'items.variant']);
         });
     }
@@ -105,6 +126,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
                 'shipping_amount' => $shippingAmount,
                 'total_amount' => $order->subtotal_amount - $order->discount_amount + $order->tax_amount + $shippingAmount,
             ]);
+
             return $order->fresh(['items.product', 'items.variant', 'payments', 'shipments']);
         });
     }
@@ -114,22 +136,39 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         return DB::transaction(function () use ($userId, $addressId, $currency, $idempotencyKey): object {
             if ($idempotencyKey !== null) {
                 $existing = CustomerOrder::query()->where('idempotency_key', $idempotencyKey)->first();
-                if ($existing !== null) return $existing->load('items');
+                if ($existing !== null) {
+                    if ((int) $existing->user_id !== $userId) {
+                        throw CheckoutException::idempotencyKeyConflict();
+                    }
+
+                    return $existing->load('items');
+                }
             }
             $user = User::query()->with(['cart.items.product', 'cart.items.variant', 'addresses'])->findOrFail($userId);
             $cart = $user->cart;
             $items = $cart?->items ?? collect();
-            if ($items->isEmpty()) throw CheckoutException::emptyCart();
+            if ($items->isEmpty()) {
+                throw CheckoutException::emptyCart();
+            }
             $address = $user->addresses()->findOrFail($addressId);
             $subtotal = 0;
             $snapshots = [];
             foreach ($items as $cartItem) {
                 $product = $cartItem->product;
-                if ($product === null || $product->status !== 'active') throw CheckoutException::unavailableProduct($product?->name ?? 'unknown');
+                if ($product === null || $product->status !== 'active') {
+                    throw CheckoutException::unavailableProduct($product?->name ?? 'unknown');
+                }
                 $variant = $cartItem->variant;
-                if ($product->type === 'variable' && ($variant === null || $variant->status !== 'active')) throw CheckoutException::unavailableProduct($product->name);
+                if ($cartItem->quantity <= 0) {
+                    throw CheckoutException::emptyCart();
+                }
+                if ($product->type === 'variable' && ($variant === null || $variant->status !== 'active')) {
+                    throw CheckoutException::unavailableProduct($product->name);
+                }
                 $unitPrice = $variant?->price ?? $product->price;
-                if ($unitPrice === null || $unitPrice < 0) throw CheckoutException::missingPrice($product->name);
+                if ($unitPrice === null || $unitPrice < 0) {
+                    throw CheckoutException::missingPrice($product->name);
+                }
                 $lineTotal = $unitPrice * $cartItem->quantity;
                 $subtotal += $lineTotal;
                 $snapshots[] = ['product_id' => $product->id, 'variant_id' => $variant?->id, 'name' => $product->name, 'sku' => $variant?->sku, 'quantity' => $cartItem->quantity, 'unit_price' => $unitPrice, 'discount_amount' => 0, 'tax_amount' => 0, 'total_amount' => $lineTotal];
@@ -138,6 +177,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             $order = CustomerOrder::query()->create(['user_id' => $userId, 'status' => 'pending', 'total_amount' => $subtotal, 'subtotal_amount' => $subtotal, 'discount_amount' => 0, 'tax_amount' => 0, 'shipping_amount' => 0, 'currency' => $currency, 'shipping_address' => ['recipient_name' => $address->recipient_name, 'phone' => $address->phone, 'address_line1' => $address->address_line1, 'address_line2' => $address->address_line2, 'city' => $address->city, 'state' => $address->state, 'postal_code' => $address->postal_code, 'country' => $address->country], 'idempotency_key' => $idempotencyKey]);
             $order->items()->createMany($snapshots);
             $cart->items()->delete();
+
             return $order->load('items');
         });
     }

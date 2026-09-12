@@ -10,6 +10,10 @@ final class UpdateOrderStatus
 
     public function execute(int $orderId, string $status): object
     {
+        if ($status === 'cancelled') {
+            return $this->orders->cancel($orderId);
+        }
+
         return $this->orders->updateStatus($orderId, $status);
     }
 }

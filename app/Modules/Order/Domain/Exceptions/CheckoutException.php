@@ -20,4 +20,9 @@ final class CheckoutException extends RuntimeException
     {
         return new self("Product [{$name}] has no valid price.");
     }
+
+    public static function idempotencyKeyConflict(): self
+    {
+        return new self('The checkout idempotency key is already associated with another order.');
+    }
 }
