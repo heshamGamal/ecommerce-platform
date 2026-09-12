@@ -26,7 +26,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('customer/orders/{orderId}', [OrderController::class, 'customerShow'])->name('customer.orders.show');
     Route::post('customer/orders/{orderId}/cancel', [OrderController::class, 'customerCancel'])->name('customer.orders.cancel');
     Route::get('customer/returns', [ReturnController::class, 'customerIndex'])->name('customer.returns.index');
-    Route::post('customer/orders/{order}/returns', [ReturnController::class, 'store'])->middleware('throttle:return-create')->name('customer.returns.store');
+    Route::post('customer/orders/{orderId}/returns', [ReturnController::class, 'store'])->middleware('throttle:return-create')->name('customer.returns.store');
     Route::post('customer/orders/{orderId}/payments', [PaymentController::class, 'store'])->middleware('throttle:payment-create')->name('customer.payments.store');
     Route::get('customer/orders/{orderId}/payments', [PaymentController::class, 'index'])->name('customer.payments.index');
     Route::get('customer/shipping-methods', [ShippingController::class, 'customerMethods'])->name('customer.shipping-methods.index');
@@ -44,8 +44,8 @@ Route::middleware('auth')->group(function (): void {
     Route::put('customer/preferences', [CustomerFeaturesController::class, 'updatePreferences'])->name('customer.preferences.update');
     Route::get('customer/notifications', [CustomerFeaturesController::class, 'notifications'])->name('customer.notifications.index');
     Route::patch('customer/notifications/{notificationId}/read', [CustomerFeaturesController::class, 'readNotification'])->name('customer.notifications.read');
-    Route::get('products/{product}/reviews', [ProductReviewController::class, 'index'])->name('customer.reviews.index');
-    Route::post('products/{product}/reviews', [ProductReviewController::class, 'store'])->name('customer.reviews.store');
+    Route::get('products/{productId}/reviews', [ProductReviewController::class, 'index'])->name('customer.reviews.index');
+    Route::post('products/{productId}/reviews', [ProductReviewController::class, 'store'])->name('customer.reviews.store');
     Route::get('reviews', [ProductReviewController::class, 'adminIndex'])->name('reviews.index');
-    Route::patch('reviews/{review}/moderate', [ProductReviewController::class, 'moderate'])->name('reviews.moderate');
+    Route::patch('reviews/{reviewId}/moderate', [ProductReviewController::class, 'moderate'])->name('reviews.moderate');
 });

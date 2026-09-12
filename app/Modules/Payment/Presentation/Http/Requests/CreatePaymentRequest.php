@@ -23,4 +23,11 @@ final class CreatePaymentRequest extends FormRequest
             'idempotency_key' => ['required', 'string', 'max:100'],
         ];
     }
+
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('idempotency_key') && $this->header('Idempotency-Key') !== null) {
+            $this->merge(['idempotency_key' => $this->header('Idempotency-Key')]);
+        }
+    }
 }

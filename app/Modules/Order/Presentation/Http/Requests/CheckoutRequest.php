@@ -55,6 +55,13 @@ final class CheckoutRequest extends FormRequest
         return $rules;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('idempotency_key') && $this->header('Idempotency-Key') !== null) {
+            $this->merge(['idempotency_key' => $this->header('Idempotency-Key')]);
+        }
+    }
+
     protected function failedAuthorization(): void
     {
         if ($this->user() === null) {

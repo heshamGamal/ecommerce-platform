@@ -100,9 +100,10 @@ final class CheckoutApiTest extends TestCase
         $cart->items()->create(['product_id' => $product->id, 'quantity' => 1]);
         InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 1, 'reserved' => 0]);
 
-        $payload = ['address_id' => $address->id, 'idempotency_key' => 'same-key'];
-        $first = $this->actingAs($user)->postJson('/api/v1/customer/checkout', $payload);
-        $second = $this->actingAs($user)->postJson('/api/v1/customer/checkout', $payload);
+        $payload = ['address_id' => $address->id];
+        $headers = ['Idempotency-Key' => 'same-key'];
+        $first = $this->actingAs($user)->postJson('/api/v1/customer/checkout', $payload, $headers);
+        $second = $this->actingAs($user)->postJson('/api/v1/customer/checkout', $payload, $headers);
 
         $first->assertCreated();
         $second->assertCreated()->assertJsonPath('data.id', $first->json('data.id'));

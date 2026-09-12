@@ -40,4 +40,11 @@ final class ShippingRequest extends FormRequest
 
         return [];
     }
+
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('idempotency_key') && $this->header('Idempotency-Key') !== null) {
+            $this->merge(['idempotency_key' => $this->header('Idempotency-Key')]);
+        }
+    }
 }
