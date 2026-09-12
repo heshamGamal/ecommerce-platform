@@ -65,6 +65,11 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             if (!in_array($status, $allowed[$order->status] ?? [], true)) {
                 throw InvalidOrderStatusTransitionException::from($order->status, $status);
             }
+            if ($status === 'shipped') {
+                foreach ($order->items as $item) {
+                    $this->inventory->commit($item->product_id, $item->variant_id, $item->quantity);
+                }
+            }
             $order->update(['status' => $status]);
             return $order->fresh(['user', 'items.product']);
         });
