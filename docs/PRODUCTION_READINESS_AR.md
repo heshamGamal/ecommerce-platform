@@ -2,6 +2,8 @@
 
 **تاريخ التدقيق:** 13 سبتمبر 2026
 
+**آخر تحديث:** أضيفت بعد التدقيق حزمة production artifacts تشمل قالب environment آمن، سياسة CORS، إعداد Supervisor، cron للـscheduler، سكربت PostgreSQL backup، وCI لفحص الجودة والأمن. ما زالت البنود التي تتطلب بنية خارجية أو secrets أو تشغيلًا فعليًا في staging غير مغلقة تلقائيًا.
+
 ## الخلاصة التنفيذية
 
 المشروع يملك أساسًا جيدًا من ناحية تقسيم الوحدات، اختبارات الصلاحيات، اتساق API v1، وتوثيق OpenAPI. لكنه **غير جاهز للإطلاق الإنتاجي المباشر** قبل إغلاق مجموعة من الموانع التشغيلية. أخطر الملاحظات ليست في منطق الـAPI، بل في التشغيل الآمن والمراقبة والاستمرارية.
@@ -15,14 +17,14 @@
 | الأولوية | المانع | الدليل من المشروع | الحكم |
 | --- | --- | --- | --- |
 | P0 | تفعيل Debug في بيئة تظهر كـProduction | ناتج `php artisan about`: `Environment PROD` و`Debug Mode ENABLED` | يمنع الإطلاق حتى يصبح `APP_DEBUG=false` وتتم مراجعة secrets وconfig cache |
-| P0 | لا توجد خطة نسخ احتياطي واستعادة موثقة أو قابلة للاختبار | لا توجد أدوات أو workflow backup/restore داخل المستودع | خطر فقدان بيانات غير مقبول لمتجر حقيقي |
+| P0 | لا يوجد backup/restore مُنفّذ ومختبر على بنية خارجية | أضيف `scripts/backup_postgres.sh` وrunbook، لكن لا توجد storage أو schedule أو restore test فعلية داخل المستودع | ما زال خطر فقدان البيانات قائمًا حتى تنفيذ الاختبار |
 | P0 | لا توجد مراقبة وتنبيهات إنتاجية | توجد logs و`X-Correlation-Id` فقط، دون APM أو metrics أو alerting | لا يمكن اكتشاف فشل الدفع أو queue أو webhook في الوقت المناسب |
-| P0 | لا توجد خطة تشغيل للـqueue workers | `QUEUE_CONNECTION=database` موجود، لكن لا يوجد Supervisor أو Horizon أو systemd أو deployment manifest | الطلبات والأحداث المؤجلة قد تتراكم أو تتوقف بصمت |
-| P0 | لا توجد خطة تشغيل فعلية للـscheduler | يوجد تعريف للمهام في `bootstrap/app.php`، ولا توجد cron/worker deployment instructions | abandoned carts وoutbox وreconciliation لن تعمل تلقائيًا دون cron خارجي |
+| P0 | لا يوجد worker مُشغّل في بنية خارجية | أضيف `deploy/supervisor/ecommerce-worker.conf`، لكن لم يُثبت على host أو يُراقب بعد | الطلبات والأحداث المؤجلة قد تتراكم أو تتوقف بصمت |
+| P0 | لا يوجد scheduler مُفعّل في بنية خارجية | أضيف `deploy/ecommerce-scheduler.cron`، لكن لم يُثبت في crontab production بعد | abandoned carts وoutbox وreconciliation لن تعمل تلقائيًا دون cron خارجي |
 | P1 | readiness health محدود | Laravel `/up` هو health endpoint أساسي، ولا يوجد فحص DB/cache/queue/providers | قد يعلن التطبيق جاهزًا رغم تعطل dependency حرجة |
-| P1 | لا توجد CORS policy إنتاجية واضحة | لا يوجد `config/cors.php` مخصص في المستودع | قد يفشل frontend منفصل أو تُفتح سياسة غير مقصودة عند إضافتها لاحقًا |
+| P1 | CORS policy تحتاج origin حقيقي | أضيف `config/cors.php` و`CORS_ALLOWED_ORIGINS`، لكن القيمة الفعلية تعتمد على domain الواجهة | يجب ضبط origin الفعلي وعدم تركه فارغًا أو واسعًا |
 | P1 | لا توجد سياسة reverse proxy/TLS موثقة | لا يوجد إعداد واضح لـtrusted proxies أو إجبار HTTPS أو secure cookies | خطر روابط غير آمنة أو cookies غير مناسبة خلف load balancer |
-| P1 | CI لا ينفذ Composer audit أو security scan أو build/deploy | workflows الحالية تشغل tests وOpenAPI lint فقط | الثغرات والتراجع التشغيلي قد يصلان إلى الفرع الرئيسي |
+| P1 | CI لا ينفذ deploy أو security scan شامل | أضيف `quality.yml` مع composer validate/audit وPHP lint والاختبارات، لكن لا يوجد staging deploy أو secret scanning أو rollback workflow | ما زال الإصدار يحتاج release pipeline خارجية |
 | P1 | تكاملات providers غير مثبتة في بيئة staging | الاختبارات الحالية لا توفر عقدة حقيقية أو sandbox verification آلية في CI | Paymob/Kashier/Bosta قد تختلف عن fakes المحلية |
 | P1 | لا توجد load/performance tests | لا توجد اختبارات ضغط أو budget للـlatency والـthroughput | سلوك النظام تحت checkout concurrent traffic غير معروف |
 | P2 | لا توجد سياسة retention وprivacy للـaudit/logs/webhook payloads | توجد `audit_logs` وتخزين metadata وpayloads، دون سياسة احتفاظ أو masking موثقة | احتمال تضخم البيانات أو الاحتفاظ ببيانات حساسة أكثر من اللازم |

@@ -1,0 +1,31 @@
+name: Quality and security
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathai/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, dom, sqlite3, pdo_sqlite
+          coverage: none
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Validate Composer metadata
+        run: composer validate --strict --no-check-publish
+      - name: Audit Composer dependencies
+        run: composer audit --no-interaction
+      - name: PHP syntax check
+        run: find app config routes database tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Run tests
+        run: php artisan test
