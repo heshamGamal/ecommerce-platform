@@ -9,6 +9,7 @@ use App\Models\InventoryItem;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\ShippingMethod;
+use App\Models\Setting;
 use App\Models\TaxRule;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
@@ -48,6 +49,39 @@ final class CheckoutApiTest extends TestCase
         ]);
         $this->assertDatabaseHas('inventory_items', ['product_id' => $product->id, 'reserved' => 2]);
         $this->assertDatabaseCount('customer_cart_items', 0);
+    }
+
+    public function test_guest_can_checkout_when_store_setting_allows_it(): void
+    {
+        Setting::query()->create([
+            'group' => 'checkout', 'key' => 'checkout.require_authentication', 'value' => '0',
+            'type' => 'boolean', 'is_secret' => false, 'is_encrypted' => false,
+        ]);
+        $product = Product::query()->create([
+            'name' => 'Guest Product', 'slug' => 'guest-product',
+            'type' => 'simple', 'status' => 'active', 'price' => 750,
+        ]);
+        InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 3, 'reserved' => 0]);
+
+        $response = $this->postJson('/api/customer/checkout', [
+            'items' => [['product_id' => $product->id, 'quantity' => 2]],
+            'guest' => [
+                'name' => 'Guest Customer', 'email' => 'guest@example.com', 'phone' => '01000000000',
+                'address_line1' => 'Street 1', 'city' => 'Cairo', 'country' => 'EG',
+            ],
+            'idempotency_key' => 'guest-checkout-1',
+        ]);
+
+        $response->assertCreated()->assertJsonPath('data.total_amount', 1500);
+        $this->assertDatabaseHas('customer_orders', [
+            'user_id' => null, 'guest_email' => 'guest@example.com', 'guest_phone' => '01000000000',
+        ]);
+        $this->assertDatabaseHas('inventory_items', ['product_id' => $product->id, 'reserved' => 2]);
+    }
+
+    public function test_guest_checkout_is_rejected_by_default(): void
+    {
+        $this->postJson('/api/customer/checkout', [])->assertUnauthorized();
     }
 
     public function test_checkout_is_idempotent_for_the_same_key(): void

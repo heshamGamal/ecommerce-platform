@@ -10,6 +10,10 @@ use App\Modules\Payment\Presentation\Http\Controllers\PaymentController;
 use App\Modules\Shipping\Presentation\Http\Controllers\ShippingController;
 use Illuminate\Support\Facades\Route;
 
+Route::post('customer/checkout', CheckoutController::class)
+    ->middleware('throttle:checkout')
+    ->name('customer.checkout');
+
 Route::middleware('auth')->group(function (): void {
     Route::get('customer/profile', [CustomerController::class, 'profile'])->name('customer.profile');
     Route::match(['put', 'patch'], 'customer/profile', [CustomerController::class, 'updateProfile'])->name('customer.profile.update');
@@ -23,7 +27,6 @@ Route::middleware('auth')->group(function (): void {
     Route::post('customer/orders/{id}/cancel', [OrderController::class, 'customerCancel'])->name('customer.orders.cancel');
     Route::get('customer/returns', [ReturnController::class, 'customerIndex'])->name('customer.returns.index');
     Route::post('customer/orders/{order}/returns', [ReturnController::class, 'store'])->middleware('throttle:return-create')->name('customer.returns.store');
-    Route::post('customer/checkout', CheckoutController::class)->middleware('throttle:checkout')->name('customer.checkout');
     Route::post('customer/orders/{orderId}/payments', [PaymentController::class, 'store'])->middleware('throttle:payment-create')->name('customer.payments.store');
     Route::get('customer/orders/{orderId}/payments', [PaymentController::class, 'index'])->name('customer.payments.index');
     Route::get('customer/shipping-methods', [ShippingController::class, 'customerMethods'])->name('customer.shipping-methods.index');

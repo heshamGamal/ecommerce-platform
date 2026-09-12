@@ -24,7 +24,7 @@ final class Checkout
     public function execute(CheckoutData $data): object
     {
         $user = $this->authentication->user();
-        if ($user === null) {
+        if ($user === null && $data->guestItems === []) {
             throw new AuthenticationException('Unauthenticated.');
         }
 
@@ -32,13 +32,9 @@ final class Checkout
         // transaction. A remote gateway call must never run under it: a
         // database rollback cannot undo a successful external charge.
         $order = $this->transactions->run(function () use ($data, $user): object {
-            $order = $this->orders->checkout(
-                $user->id,
-                $data->addressId,
-                $data->currency,
-                $data->idempotencyKey,
-                $data->couponCode,
-            );
+            $order = $user === null
+                ? $this->orders->checkoutGuest($data->guestItems, $data->guestDetails, $data->currency, $data->idempotencyKey, $data->couponCode)
+                : $this->orders->checkout($user->id, $data->addressId, $data->currency, $data->idempotencyKey, $data->couponCode);
 
             if ($data->shippingMethodId !== null) {
                 $shipment = $this->createShipment->execute($order->id, new CreateShipmentData(
@@ -62,6 +58,6 @@ final class Checkout
             ));
         }
 
-        return $this->orders->findForUser($user->id, $order->id);
+        return $user === null ? $this->orders->find($order->id) : $this->orders->findForUser($user->id, $order->id);
     }
 }

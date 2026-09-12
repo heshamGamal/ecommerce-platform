@@ -24,9 +24,10 @@ class CatalogApiTest extends TestCase
   $this->actingAs($this->user)->postJson("/api/products/{$variable}/variants",$payload)->assertCreated();
   $this->actingAs($this->user)->postJson("/api/products/{$variable}/variants",array_merge($payload,['sku'=>'SKU-2']))->assertConflict();
  }
- public function test_permissions_are_required():void
+  public function test_storefront_catalog_is_public_but_mutations_require_permissions():void
  {
   $this->postJson('/api/products',[])->assertUnauthorized();
-  $user=User::factory()->create();$this->actingAs($user)->getJson('/api/products')->assertForbidden();
+  $this->getJson('/api/products')->assertOk();
+  $user=User::factory()->create();$this->actingAs($user)->postJson('/api/products',[])->assertForbidden();
  }
 }

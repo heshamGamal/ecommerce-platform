@@ -11,7 +11,13 @@ final class CatalogActionRequest extends FormRequest
 
     public function authorize(): bool
     {
-        $permission = match ($this->route()?->getName()) {
+        $routeName = preg_replace('/^v1\./', '', (string) $this->route()?->getName());
+        if ($this->isMethod('GET') && in_array($routeName, [
+            'products.index', 'products.show', 'products.variants.index', 'products.variants.show',
+        ], true)) {
+            return true;
+        }
+        $permission = match ($routeName) {
             'products.index', 'products.show',
             'products.variants.index', 'products.variants.show',
             'attributes.index', 'attributes.show',

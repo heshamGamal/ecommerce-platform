@@ -49,7 +49,12 @@ class ApiAuthorizationTest extends TestCase
     public function test_every_endpoint_requires_authentication(): void
     {
         foreach ($this->endpointRequests() as [$method, $uri, $payload]) {
-            $this->request($method, $uri, $payload)->assertUnauthorized();
+            $response = $this->request($method, $uri, $payload);
+            if ($this->isPublicStorefront($method, $uri)) {
+                $response->assertOk();
+            } else {
+                $response->assertUnauthorized();
+            }
         }
     }
 
@@ -58,7 +63,12 @@ class ApiAuthorizationTest extends TestCase
         $this->actingAs($this->user);
 
         foreach ($this->endpointRequests() as [$method, $uri, $payload]) {
-            $this->request($method, $uri, $payload)->assertForbidden();
+            $response = $this->request($method, $uri, $payload);
+            if ($this->isPublicStorefront($method, $uri)) {
+                $response->assertOk();
+            } else {
+                $response->assertForbidden();
+            }
         }
     }
 
@@ -136,5 +146,10 @@ class ApiAuthorizationTest extends TestCase
     private function request(string $method, string $uri, array $payload): TestResponse
     {
         return $this->json($method, $uri, $payload);
+    }
+
+    private function isPublicStorefront(string $method, string $uri): bool
+    {
+        return $method === 'GET' && (bool) preg_match('#^/api/products(?:/\d+|/\d+/variants(?:/\d+)?)?$#', $uri);
     }
 }

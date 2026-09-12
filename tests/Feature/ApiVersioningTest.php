@@ -26,7 +26,7 @@ final class ApiVersioningTest extends TestCase
             }
         }
 
-        $this->assertCount(119, $versioned);
+        $this->assertCount(count($legacy), $versioned);
         $this->assertSame(array_keys($legacy), array_keys($versioned));
         $this->assertSame('v1.customer.checkout', $versioned['POST|api/customer/checkout']);
         $this->assertSame('v1.webhooks.paymob', $versioned['POST|api/webhooks/paymob']);

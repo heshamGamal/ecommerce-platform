@@ -15,7 +15,7 @@ final class CheckoutController extends Controller
         $data = $request->validated();
 
         $order = $checkout->execute(new CheckoutData(
-            addressId: (int) $data['address_id'],
+            addressId: isset($data['address_id']) ? (int) $data['address_id'] : null,
             currency: strtoupper($data['currency'] ?? 'EGP'),
             idempotencyKey: $data['idempotency_key'] ?? null,
             shippingMethodId: isset($data['shipping_method_id']) ? (int) $data['shipping_method_id'] : null,
@@ -23,6 +23,8 @@ final class CheckoutController extends Controller
             paymentMethod: $data['payment_method'] ?? null,
             paymentIdempotencyKey: $data['payment_idempotency_key'] ?? null,
             couponCode: $data['coupon_code'] ?? null,
+            guestItems: $data['items'] ?? [],
+            guestDetails: $data['guest'] ?? [],
         ));
 
         return response()->json(['data' => $order], 201);

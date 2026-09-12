@@ -5,7 +5,7 @@ namespace App\Modules\Order\Domain\ValueObjects;
 final readonly class CheckoutData
 {
     public function __construct(
-        public int $addressId,
+        public ?int $addressId = null,
         public string $currency = 'EGP',
         public ?string $idempotencyKey = null,
         public ?int $shippingMethodId = null,
@@ -13,5 +13,7 @@ final readonly class CheckoutData
         public ?string $paymentMethod = null,
         public ?string $paymentIdempotencyKey = null,
         public ?string $couponCode = null,
+        public array $guestItems = [],
+        public array $guestDetails = [],
     ) {}
 }

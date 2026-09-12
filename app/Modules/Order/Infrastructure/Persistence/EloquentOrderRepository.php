@@ -210,4 +210,64 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             return $order->load('items');
         });
     }
+
+    public function checkoutGuest(array $items, array $details, string $currency, ?string $idempotencyKey, ?string $couponCode = null): object
+    {
+        return DB::transaction(function () use ($items, $details, $currency, $idempotencyKey): object {
+            if ($idempotencyKey !== null) {
+                $existing = CustomerOrder::query()->where('idempotency_key', $idempotencyKey)->first();
+                if ($existing !== null) {
+                    return $existing->load('items');
+                }
+            }
+
+            $subtotal = 0;
+            $snapshots = [];
+            foreach ($items as $item) {
+                $product = \App\Models\Product::query()->with('variants')->find($item['product_id']);
+                if ($product === null || $product->status !== 'active') {
+                    throw CheckoutException::unavailableProduct((string) ($product?->name ?? 'unknown'));
+                }
+                $variant = isset($item['variant_id']) ? $product->variants->firstWhere('id', (int) $item['variant_id']) : null;
+                if ($product->type === 'variable' && ($variant === null || $variant->status !== 'active')) {
+                    throw CheckoutException::unavailableProduct($product->name);
+                }
+                $quantity = (int) $item['quantity'];
+                $unitPrice = $variant?->price ?? $product->price;
+                if ($quantity < 1) {
+                    throw CheckoutException::emptyCart();
+                }
+                if ($unitPrice === null || $unitPrice < 0) {
+                    throw CheckoutException::missingPrice($product->name);
+                }
+                $lineTotal = $unitPrice * $quantity;
+                $subtotal += $lineTotal;
+                $snapshots[] = ['product_id' => $product->id, 'variant_id' => $variant?->id, 'name' => $product->name, 'sku' => $variant?->sku, 'quantity' => $quantity, 'unit_price' => $unitPrice, 'discount_amount' => 0, 'tax_amount' => 0, 'total_amount' => $lineTotal];
+                $this->inventory->reserve($product->id, $variant?->id, $quantity);
+            }
+
+            $country = strtoupper((string) ($details['country'] ?? 'EG'));
+            $tax = $this->taxes->calculate($subtotal, $country, $details['state'] ?? null);
+            $total = $subtotal + $tax['amount'];
+            $order = CustomerOrder::query()->create([
+                'user_id' => null,
+                'guest_email' => $details['email'] ?? null,
+                'guest_phone' => $details['phone'],
+                'status' => 'pending',
+                'total_amount' => $total,
+                'subtotal_amount' => $subtotal,
+                'discount_amount' => 0,
+                'tax_amount' => $tax['amount'],
+                'tax_rate' => $tax['rate'],
+                'tax_rule_id' => $tax['rule_id'],
+                'shipping_amount' => 0,
+                'currency' => $currency,
+                'shipping_address' => ['recipient_name' => $details['name'], 'phone' => $details['phone'], 'address_line1' => $details['address_line1'], 'address_line2' => $details['address_line2'] ?? null, 'city' => $details['city'], 'state' => $details['state'] ?? null, 'postal_code' => $details['postal_code'] ?? null, 'country' => $country],
+                'idempotency_key' => $idempotencyKey,
+            ]);
+            $order->items()->createMany($snapshots);
+
+            return $order->load('items');
+        });
+    }
 }

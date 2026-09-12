@@ -6,6 +6,8 @@ interface OrderRepositoryInterface
 {
     public function checkout(int $userId, int $addressId, string $currency, ?string $idempotencyKey, ?string $couponCode = null): object;
 
+    public function checkoutGuest(array $items, array $details, string $currency, ?string $idempotencyKey, ?string $couponCode = null): object;
+
     public function listForUser(int $userId): iterable;
 
     public function listAll(): iterable;
