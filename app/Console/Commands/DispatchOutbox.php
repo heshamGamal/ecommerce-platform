@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Shared\Infrastructure\Console;
+namespace App\Console\Commands;
 
 use App\Models\OutboxEvent;
 use App\Modules\Shared\Application\Jobs\ProcessOutboxEvent;

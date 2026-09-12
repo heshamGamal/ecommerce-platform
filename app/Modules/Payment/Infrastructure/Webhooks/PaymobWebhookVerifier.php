@@ -3,8 +3,9 @@
 namespace App\Modules\Payment\Infrastructure\Webhooks;
 
 use App\Modules\Payment\Infrastructure\Configuration\PaymentGatewaySettings;
+use App\Modules\Payment\Domain\Contracts\PaymobWebhookVerifierInterface;
 
-final class PaymobWebhookVerifier
+final class PaymobWebhookVerifier implements PaymobWebhookVerifierInterface
 {
     public function __construct(private readonly PaymentGatewaySettings $settings)
     {

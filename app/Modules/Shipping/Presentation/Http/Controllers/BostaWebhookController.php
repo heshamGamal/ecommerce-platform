@@ -4,17 +4,16 @@ namespace App\Modules\Shipping\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Shipping\Application\UseCases\ProcessBostaWebhook;
-use App\Modules\Shipping\Infrastructure\Configuration\ShippingProviderSettings;
+use App\Modules\Shipping\Application\UseCases\AuthenticateShippingWebhook;
+use App\Modules\Shipping\Presentation\Http\Requests\WebhookRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class BostaWebhookController extends Controller
 {
-    public function __invoke(Request $request, ProcessBostaWebhook $process, ShippingProviderSettings $settings): JsonResponse
+    public function __invoke(WebhookRequest $request, ProcessBostaWebhook $process, AuthenticateShippingWebhook $authenticate): JsonResponse
     {
-        $header = (string) $settings->value('bosta', 'webhook_auth_header', config('services.bosta.webhook_auth_header', 'Authorization'));
-        $expected = (string) $settings->value('bosta', 'webhook_auth_value', config('services.bosta.webhook_auth_value'));
-        if ($expected === '' || ! hash_equals($expected, (string) $request->header($header, ''))) {
+        $header = (string) config('services.bosta.webhook_auth_header', 'Authorization');
+        if (! $authenticate->execute($header, (string) $request->header($header, ''))) {
             return response()->json(['message' => 'Invalid Bosta webhook credentials.'], 401);
         }
 

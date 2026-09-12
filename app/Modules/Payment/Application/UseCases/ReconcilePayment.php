@@ -8,6 +8,7 @@ use App\Modules\Payment\Domain\Contracts\PaymentGatewayInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
+use Illuminate\Support\Str;
 
 final class ReconcilePayment
 {
@@ -25,6 +26,10 @@ final class ReconcilePayment
         $payment = $this->payments->find($paymentId);
         if (! in_array($payment->status, ['processing', 'provider_created'], true)) {
             return $payment;
+        }
+        $leaseToken = (string) Str::uuid();
+        if (! $this->operations->acquireLease((int) $payment->id, 'create', $leaseToken)) {
+            throw new PaymentException('Payment reconciliation is already in progress.');
         }
         $result = $this->gateway->reconcilePayment($payment);
         $status = (string) ($result['status'] ?? 'processing');

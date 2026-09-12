@@ -6,7 +6,6 @@ use App\Models\ShippingWebhookEvent;
 use App\Modules\Shipping\Domain\Contracts\ShipmentRepositoryInterface;
 use App\Modules\Shipping\Domain\Contracts\ShipmentOperationRepositoryInterface;
 use App\Modules\Shipping\Domain\Exceptions\ShippingException;
-use Illuminate\Database\QueryException;
 
 final class ProcessBostaWebhook
 {
@@ -37,7 +36,7 @@ final class ProcessBostaWebhook
                 'status' => 'received',
                 'payload' => $payload,
             ]);
-        } catch (QueryException $exception) {
+        } catch (\Throwable $exception) {
             $existing = ShippingWebhookEvent::query()->where('provider', 'bosta')->where('event_id', $eventId)->first();
             if ($existing?->status === 'processed') {
                 return $shipment;

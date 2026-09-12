@@ -9,8 +9,7 @@ use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
 use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;
-use App\Modules\Payment\Infrastructure\Webhooks\PaymobWebhookVerifier;
-use Illuminate\Database\QueryException;
+use App\Modules\Payment\Domain\Contracts\PaymobWebhookVerifierInterface;
 
 final class ProcessPaymobWebhook
 {
@@ -19,7 +18,7 @@ final class ProcessPaymobWebhook
         private readonly PaymentOperationRepositoryInterface $operations,
         private readonly OrderRepositoryInterface $orders,
         private readonly TransactionManagerInterface $transactions,
-        private readonly PaymobWebhookVerifier $verifier,
+        private readonly PaymobWebhookVerifierInterface $verifier,
     ) {
     }
 
@@ -57,7 +56,7 @@ final class ProcessPaymobWebhook
                 'payment_reference' => $reference,
                 'payload' => $payload,
             ]);
-        } catch (QueryException $exception) {
+        } catch (\Throwable $exception) {
             $existingEvent = PaymentWebhookEvent::query()->where('provider', 'paymob')->where('event_id', $eventId)->first();
             if ($existingEvent?->status === 'processed') {
                 return null;

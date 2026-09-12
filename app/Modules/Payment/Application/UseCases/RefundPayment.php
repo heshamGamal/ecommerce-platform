@@ -12,6 +12,7 @@ use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\InvalidPaymentTransitionException;
 use App\Modules\Payment\Domain\Exceptions\PaymentFailedException;
+use Illuminate\Support\Str;
 
 final class RefundPayment
 {
@@ -43,6 +44,10 @@ final class RefundPayment
             });
         }
         $this->operations->start((int) $payment->id, 'refund', $operationKey);
+        $leaseToken = (string) Str::uuid();
+        if (! $this->operations->acquireLease((int) $payment->id, 'refund', $leaseToken)) {
+            throw new PaymentFailedException('Refund operation is already in progress.');
+        }
         try {
             $result = $this->gateway->refundPayment($payment);
             if (($result['status'] ?? null) !== 'refunded') {

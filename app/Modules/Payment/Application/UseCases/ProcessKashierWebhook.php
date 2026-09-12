@@ -9,8 +9,7 @@ use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
 use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;
-use App\Modules\Payment\Infrastructure\Webhooks\KashierWebhookVerifier;
-use Illuminate\Database\QueryException;
+use App\Modules\Payment\Domain\Contracts\KashierWebhookVerifierInterface;
 
 final class ProcessKashierWebhook
 {
@@ -19,7 +18,7 @@ final class ProcessKashierWebhook
         private readonly PaymentOperationRepositoryInterface $operations,
         private readonly OrderRepositoryInterface $orders,
         private readonly TransactionManagerInterface $transactions,
-        private readonly KashierWebhookVerifier $verifier,
+        private readonly KashierWebhookVerifierInterface $verifier,
     ) {
     }
 
@@ -53,7 +52,7 @@ final class ProcessKashierWebhook
                 'payment_reference' => (string) ($payload['orderId'] ?? $eventId),
                 'payload' => $payload,
             ]);
-        } catch (QueryException $exception) {
+        } catch (\Throwable $exception) {
             $existingEvent = PaymentWebhookEvent::query()->where('provider', 'kashier')->where('event_id', $eventId)->first();
             if ($existingEvent?->status === 'processed') {
                 return null;
