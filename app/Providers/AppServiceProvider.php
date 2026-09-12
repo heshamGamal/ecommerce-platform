@@ -23,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('auth-register', static fn (Request $request): Limit => Limit::perMinute(3)->by($request->ip()));
+        RateLimiter::for('password-change', static fn (Request $request): Limit => Limit::perMinute(5)->by((string) ($request->user()?->id ?? $request->ip())));
+        RateLimiter::for('checkout', static fn (Request $request): Limit => Limit::perMinute(10)->by((string) ($request->user()?->id ?? $request->ip())));
+        RateLimiter::for('payment-create', static fn (Request $request): Limit => Limit::perMinute(10)->by((string) ($request->user()?->id ?? $request->ip())));
+        RateLimiter::for('return-create', static fn (Request $request): Limit => Limit::perMinute(10)->by((string) ($request->user()?->id ?? $request->ip())));
+        RateLimiter::for('cart-mutation', static fn (Request $request): Limit => Limit::perMinute(60)->by((string) ($request->user()?->id ?? $request->ip())));
         RateLimiter::for('payment-webhook', static fn (Request $request): Limit => Limit::perMinute(120)->by($request->ip()));
         RateLimiter::for('shipping-webhook', static fn (Request $request): Limit => Limit::perMinute(120)->by($request->ip()));
     }
