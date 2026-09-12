@@ -1,4 +1,49 @@
 <?php
+
 namespace App\Modules\Customer\Application\UseCases;
-use App\Models\CustomerAddress; use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface; use App\Modules\Auth\Domain\Exceptions\AuthenticationException; use App\Modules\Customer\Domain\Contracts\CustomerFeaturesRepositoryInterface; use App\Modules\Customer\Domain\Exceptions\CustomerFeatureNotFoundException;
-final class ManageCustomerAddress { public function __construct(private readonly AuthenticationServiceInterface $auth,private readonly CustomerFeaturesRepositoryInterface $repo){} private function user(){ $u=$this->auth->user();if(!$u)throw new AuthenticationException('Unauthenticated.');return $u;} public function create(array $data):CustomerAddress{$u=$this->user();if($data['is_default']??false)$this->repo->clearDefaultAddress($u->id);return $this->repo->createAddress($u->id,$data);} public function update(int $id,array $data):CustomerAddress{$u=$this->user();$a=$this->repo->address($u->id,$id);if(!$a)throw new CustomerFeatureNotFoundException('Address',$id);if($data['is_default']??false)$this->repo->clearDefaultAddress($u->id);return $this->repo->updateAddress($a,$data);} public function delete(int $id):void{$u=$this->user();$a=$this->repo->address($u->id,$id);if(!$a)throw new CustomerFeatureNotFoundException('Address',$id);$this->repo->deleteAddress($a);} }
+
+use App\Models\CustomerAddress;
+use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
+use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
+use App\Modules\Customer\Domain\Contracts\AddressRepositoryInterface;
+use App\Modules\Customer\Domain\Exceptions\CustomerFeatureNotFoundException;
+
+final class ManageCustomerAddress
+{
+    public function __construct(private readonly AuthenticationServiceInterface $auth, private readonly AddressRepositoryInterface $addresses) {}
+
+    private function user(): object
+    {
+        $user = $this->auth->user();
+        if (!$user) throw new AuthenticationException('Unauthenticated.');
+        return $user;
+    }
+
+    public function create(array $data): CustomerAddress
+    {
+        return $this->addresses->createForUser($this->user()->id, $data);
+    }
+
+    public function update(int $id, array $data): CustomerAddress
+    {
+        $address = $this->find($id);
+        return $this->addresses->update($address, $data);
+    }
+
+    public function delete(int $id): void
+    {
+        $this->addresses->delete($this->find($id));
+    }
+
+    private function find(int $id): CustomerAddress
+    {
+        try {
+            return $this->addresses->findForUser($this->user()->id, $id);
+        } catch (\Throwable $exception) {
+            if ($exception instanceof \App\Modules\Customer\Domain\Exceptions\AddressNotFoundException) {
+                throw new CustomerFeatureNotFoundException('Address', $id);
+            }
+            throw $exception;
+        }
+    }
+}

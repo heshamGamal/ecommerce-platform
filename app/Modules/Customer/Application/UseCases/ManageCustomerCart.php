@@ -1,4 +1,25 @@
 <?php
+
 namespace App\Modules\Customer\Application\UseCases;
-use App\Models\CustomerCart;use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;use App\Modules\Auth\Domain\Exceptions\AuthenticationException;use App\Modules\Customer\Domain\Contracts\CustomerFeaturesRepositoryInterface;
-final class ManageCustomerCart {public function __construct(private readonly AuthenticationServiceInterface $auth,private readonly CustomerFeaturesRepositoryInterface $repo){} private function cart():CustomerCart{$u=$this->auth->user();if(!$u)throw new AuthenticationException('Unauthenticated.');return $this->repo->cart($u->id);}public function show():CustomerCart{return $this->cart()->load('items.product');}public function add(int $productId,int $quantity):CustomerCart{return $this->repo->addCartItem($this->cart(),$productId,$quantity);}public function update(int $productId,int $quantity):CustomerCart{return $this->repo->updateCartItem($this->cart(),$productId,$quantity);}public function remove(int $productId):CustomerCart{return $this->repo->removeCartItem($this->cart(),$productId);} }
+
+use App\Models\CustomerCart;
+use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
+use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
+use App\Modules\Customer\Domain\Contracts\CartRepositoryInterface;
+
+final class ManageCustomerCart
+{
+    public function __construct(private readonly AuthenticationServiceInterface $auth, private readonly CartRepositoryInterface $cart) {}
+
+    private function userId(): int
+    {
+        $user = $this->auth->user();
+        if (!$user) throw new AuthenticationException('Unauthenticated.');
+        return $user->id;
+    }
+
+    public function show(): CustomerCart { return $this->cart->get($this->userId()); }
+    public function add(int $productId, int $quantity): CustomerCart { return $this->cart->addItem($this->userId(), $productId, null, $quantity); }
+    public function update(int $productId, int $quantity): CustomerCart { return $this->cart->updateItem($this->userId(), $productId, null, $quantity); }
+    public function remove(int $productId): CustomerCart { return $this->cart->removeItem($this->userId(), $productId, null); }
+}
