@@ -13,6 +13,7 @@ use App\Modules\Staff\Presentation\Http\Controllers\StaffController;
 use App\Modules\Inventory\Presentation\Http\Controllers\InventoryController;
 use App\Modules\Order\Presentation\Http\Controllers\CheckoutController;
 use App\Modules\Order\Presentation\Http\Controllers\OrderController;
+use App\Modules\Order\Presentation\Http\Controllers\ReturnController;
 use App\Modules\Payment\Presentation\Http\Controllers\PaymentController;
 use App\Modules\Payment\Presentation\Http\Controllers\PaymobWebhookController;
 use App\Modules\Payment\Presentation\Http\Controllers\KashierWebhookController;
@@ -50,6 +51,8 @@ Route::middleware('auth')->group(function () {
     Route::get('customer/orders', [OrderController::class, 'customerIndex'])->name('customer.orders.index');
     Route::get('customer/orders/{id}', [OrderController::class, 'customerShow'])->name('customer.orders.show');
     Route::post('customer/orders/{id}/cancel', [OrderController::class, 'customerCancel'])->name('customer.orders.cancel');
+    Route::get('customer/returns', [ReturnController::class, 'customerIndex'])->name('customer.returns.index');
+    Route::post('customer/orders/{order}/returns', [ReturnController::class, 'store'])->name('customer.returns.store');
     Route::post('customer/checkout', CheckoutController::class)->name('customer.checkout');
     Route::post('customer/orders/{orderId}/payments', [PaymentController::class, 'store'])->name('customer.payments.store');
     Route::get('customer/orders/{orderId}/payments', [PaymentController::class, 'index'])->name('customer.payments.index');
@@ -115,6 +118,9 @@ Route::middleware('auth')->group(function () {
     Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
     Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
     Route::post('orders/{id}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+    Route::get('returns', [ReturnController::class, 'index'])->name('returns.index');
+    Route::patch('returns/{return}/approve', [ReturnController::class, 'approve'])->name('returns.approve');
+    Route::patch('returns/{return}/reject', [ReturnController::class, 'reject'])->name('returns.reject');
     Route::get('payments/orders/{orderId}', [PaymentController::class, 'adminIndex'])->name('payments.index');
     Route::get('operations/dashboard', OperationalDashboardController::class)->name('operations.dashboard');
     Route::post('payments/{paymentId}/confirm', [PaymentController::class, 'confirm'])->name('payments.confirm');
