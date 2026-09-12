@@ -11,6 +11,7 @@ use App\Modules\Staff\Presentation\Http\Controllers\StaffController;
 use App\Modules\Inventory\Presentation\Http\Controllers\InventoryController;
 use App\Modules\Order\Presentation\Http\Controllers\CheckoutController;
 use App\Modules\Order\Presentation\Http\Controllers\OrderController;
+use App\Modules\Payment\Presentation\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('auth/register', [AuthController::class, 'register'])->middleware('guest')->name('auth.register');
@@ -39,6 +40,8 @@ Route::middleware('auth')->group(function () {
     Route::get('customer/orders/{id}', [OrderController::class, 'customerShow'])->name('customer.orders.show');
     Route::post('customer/orders/{id}/cancel', [OrderController::class, 'customerCancel'])->name('customer.orders.cancel');
     Route::post('customer/checkout', CheckoutController::class)->name('customer.checkout');
+    Route::post('customer/orders/{orderId}/payments', [PaymentController::class, 'store'])->name('customer.payments.store');
+    Route::get('customer/orders/{orderId}/payments', [PaymentController::class, 'index'])->name('customer.payments.index');
     Route::get('customer/cart', [CustomerFeaturesController::class, 'cart'])->name('customer.cart.show');
     Route::post('customer/cart/items', [CustomerFeaturesController::class, 'addCartItem'])->name('customer.cart.items.store');
     Route::patch('customer/cart/items', [CustomerFeaturesController::class, 'updateCartItem'])->name('customer.cart.items.update');
@@ -85,4 +88,7 @@ Route::middleware('auth')->group(function () {
     Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
     Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
     Route::post('orders/{id}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+    Route::get('payments/orders/{orderId}', [PaymentController::class, 'adminIndex'])->name('payments.index');
+    Route::post('payments/{paymentId}/confirm', [PaymentController::class, 'confirm'])->name('payments.confirm');
+    Route::post('payments/{paymentId}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
 });

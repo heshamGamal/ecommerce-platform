@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Modules\Payment\Application\UseCases;
+
+use App\Models\Payment;
+use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
+use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
+use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
+use App\Modules\Payment\Application\DTOs\PaymentData;
+use App\Modules\Payment\Domain\Contracts\PaymentGatewayInterface;
+use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
+use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;
+use App\Modules\Payment\Domain\Exceptions\PaymentException;
+
+final class CreatePayment
+{
+    public function __construct(
+        private readonly AuthenticationServiceInterface $authentication,
+        private readonly OrderRepositoryInterface $orders,
+        private readonly PaymentRepositoryInterface $payments,
+        private readonly PaymentGatewayInterface $gateway,
+    ) {}
+
+    public function execute(int $orderId, PaymentData $data): Payment
+    {
+        $user = $this->authentication->user();
+        if ($user === null) throw new AuthenticationException('Unauthenticated.');
+        if ($data->method !== 'cash_on_delivery') throw new PaymentException('Unsupported payment method.');
+
+        $order = $this->orders->findForUser($user->id, $orderId);
+        if ($data->currency !== $order->currency) throw new PaymentAmountMismatchException('Payment currency does not match the order.');
+        if ($data->amount !== null && $data->amount !== $order->total_amount) throw new PaymentAmountMismatchException('Payment amount does not match the order.');
+
+        $existing = $this->payments->findByIdempotencyKey($data->idempotencyKey);
+        if ($existing !== null) {
+            if ($existing->order_id !== $order->id) throw new PaymentException('Idempotency key belongs to another order.');
+            return $existing;
+        }
+
+        $result = $this->gateway->createPayment($order, $data->idempotencyKey);
+        return $this->payments->create([
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'method' => $data->method,
+            'provider_reference' => $result['provider_reference'],
+            'amount' => $order->total_amount,
+            'currency' => $order->currency,
+            'status' => $result['status'],
+            'idempotency_key' => $data->idempotencyKey,
+            'metadata' => $result['metadata'] ?? null,
+        ]);
+    }
+}
