@@ -12,5 +12,6 @@ final readonly class CheckoutData
         public ?string $shippingIdempotencyKey = null,
         public ?string $paymentMethod = null,
         public ?string $paymentIdempotencyKey = null,
+        public ?string $couponCode = null,
     ) {}
 }

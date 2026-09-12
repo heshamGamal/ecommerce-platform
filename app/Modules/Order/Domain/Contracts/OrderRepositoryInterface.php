@@ -4,7 +4,7 @@ namespace App\Modules\Order\Domain\Contracts;
 
 interface OrderRepositoryInterface
 {
-    public function checkout(int $userId, int $addressId, string $currency, ?string $idempotencyKey): object;
+    public function checkout(int $userId, int $addressId, string $currency, ?string $idempotencyKey, ?string $couponCode = null): object;
 
     public function listForUser(int $userId): iterable;
 

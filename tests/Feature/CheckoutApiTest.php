@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\CustomerAddress;
+use App\Models\Coupon;
 use App\Models\CustomerCart;
 use App\Models\InventoryItem;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\ShippingMethod;
+use App\Models\TaxRule;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -71,6 +73,24 @@ final class CheckoutApiTest extends TestCase
         $first->assertCreated();
         $second->assertCreated()->assertJsonPath('data.id', $first->json('data.id'));
         $this->assertDatabaseCount('customer_orders', 1);
+    }
+
+    public function test_checkout_applies_coupon_and_tax_and_snapshots_both(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $user = $this->userWithRole('customer');
+        $product = Product::query()->create(['name' => 'Taxed Product', 'slug' => 'taxed-product', 'type' => 'simple', 'status' => 'active', 'price' => 1000]);
+        $address = CustomerAddress::query()->create(['user_id' => $user->id, 'recipient_name' => 'Customer', 'phone' => '01000000000', 'address_line1' => 'Street 1', 'city' => 'Cairo', 'country' => 'EG', 'is_default' => true]);
+        $cart = CustomerCart::query()->create(['user_id' => $user->id]);
+        $cart->items()->create(['product_id' => $product->id, 'quantity' => 1]);
+        InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 2, 'reserved' => 0]);
+        Coupon::query()->create(['code' => 'SAVE10', 'type' => 'percent', 'value' => 10, 'is_active' => true]);
+        TaxRule::query()->create(['name' => 'Egypt VAT', 'country' => 'EG', 'rate' => 14, 'is_active' => true]);
+
+        $this->actingAs($user)->postJson('/api/customer/checkout', ['address_id' => $address->id, 'coupon_code' => 'save10'])
+            ->assertCreated()->assertJsonPath('data.subtotal_amount', 1000)->assertJsonPath('data.discount_amount', 100)
+            ->assertJsonPath('data.tax_amount', 126)->assertJsonPath('data.total_amount', 1026)->assertJsonPath('data.coupon_code', 'SAVE10');
+        $this->assertDatabaseCount('coupon_usages', 1);
     }
 
     public function test_checkout_orchestrates_shipping_and_payment_after_reserving_inventory(): void

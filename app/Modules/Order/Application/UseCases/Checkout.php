@@ -37,6 +37,7 @@ final class Checkout
                 $data->addressId,
                 $data->currency,
                 $data->idempotencyKey,
+                $data->couponCode,
             );
 
             if ($data->shippingMethodId !== null) {

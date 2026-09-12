@@ -22,6 +22,7 @@ final class CheckoutController extends Controller
             shippingIdempotencyKey: $data['shipping_idempotency_key'] ?? null,
             paymentMethod: $data['payment_method'] ?? null,
             paymentIdempotencyKey: $data['payment_idempotency_key'] ?? null,
+            couponCode: $data['coupon_code'] ?? null,
         ));
 
         return response()->json(['data' => $order], 201);

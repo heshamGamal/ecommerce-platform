@@ -24,6 +24,7 @@ final class CheckoutRequest extends FormRequest
             'shipping_idempotency_key' => ['nullable', 'string', 'max:100', 'required_with:shipping_method_id'],
             'payment_method' => ['nullable', 'string', 'in:cash_on_delivery,paymob,kashier'],
             'payment_idempotency_key' => ['nullable', 'string', 'max:100', 'required_with:payment_method'],
+            'coupon_code' => ['nullable', 'string', 'max:80', 'regex:/^[A-Za-z0-9_-]+$/'],
         ];
     }
 }
