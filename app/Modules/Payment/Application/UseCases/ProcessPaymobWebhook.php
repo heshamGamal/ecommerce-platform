@@ -2,7 +2,6 @@
 
 namespace App\Modules\Payment\Application\UseCases;
 
-use App\Models\PaymentWebhookEvent;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
 use App\Modules\Order\Domain\Contracts\TransactionManagerInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
@@ -10,6 +9,7 @@ use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
 use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;
 use App\Modules\Payment\Domain\Contracts\PaymobWebhookVerifierInterface;
+use App\Modules\Payment\Domain\Contracts\PaymentWebhookEventRepositoryInterface;
 
 final class ProcessPaymobWebhook
 {
@@ -19,6 +19,7 @@ final class ProcessPaymobWebhook
         private readonly OrderRepositoryInterface $orders,
         private readonly TransactionManagerInterface $transactions,
         private readonly PaymobWebhookVerifierInterface $verifier,
+        private readonly PaymentWebhookEventRepositoryInterface $events,
     ) {
     }
 
@@ -35,6 +36,21 @@ final class ProcessPaymobWebhook
             throw new PaymentException('Paymob webhook is missing its event reference.');
         }
 
+        $event = $this->events->recordOrGet([
+                'provider' => 'paymob',
+                'event_id' => $eventId,
+                'event_type' => (string) ($payload['type'] ?? 'TRANSACTION'),
+                'status' => 'received',
+                'payment_reference' => $reference,
+                'payload' => $payload,
+            ]);
+        if ($event->status === 'processed') {
+            return null;
+        }
+        if (! array_key_exists('success', $object) && ! array_key_exists('pending', $object)) {
+            throw new PaymentException('Paymob webhook event payload is invalid.');
+        }
+
         $merchantReference = (string) data_get($object, 'order.merchant_order_id', '');
         $payment = $merchantReference !== ''
             ? $this->payments->findByIdempotencyKey($merchantReference)
@@ -47,32 +63,13 @@ final class ProcessPaymobWebhook
             throw new PaymentAmountMismatchException('Paymob webhook amount does not match the local payment.');
         }
 
-        try {
-            PaymentWebhookEvent::query()->create([
-                'provider' => 'paymob',
-                'event_id' => $eventId,
-                'event_type' => (string) ($payload['type'] ?? 'TRANSACTION'),
-                'status' => 'received',
-                'payment_reference' => $reference,
-                'payload' => $payload,
-            ]);
-        } catch (\Throwable $exception) {
-            $existingEvent = PaymentWebhookEvent::query()->where('provider', 'paymob')->where('event_id', $eventId)->first();
-            if ($existingEvent?->status === 'processed') {
-                return null;
-            }
-            if ($existingEvent === null) {
-                throw $exception;
-            }
-        }
-
         $pending = (bool) ($object['pending'] ?? false);
         $status = $pending ? 'pending' : ((bool) ($object['success'] ?? false) ? 'confirmed' : 'failed');
         if ($status === 'pending' && $payment->status === 'provider_created') {
             $status = 'provider_created';
         }
         if (in_array($payment->status, ['confirmed', 'paid', 'refunded'], true) && $status !== 'confirmed') {
-            PaymentWebhookEvent::query()->where('provider', 'paymob')->where('event_id', $eventId)->update(['status' => 'processed', 'processed_at' => now()]);
+            $this->events->markProcessed('paymob', $eventId);
             return $payment;
         }
         $metadata = array_merge((array) $payment->metadata, [
@@ -88,10 +85,7 @@ final class ProcessPaymobWebhook
             if ($status === 'confirmed' && $updated->order->status === 'pending') {
                 $this->orders->updateStatus((int) $updated->order_id, 'confirmed');
             }
-            PaymentWebhookEvent::query()->where('provider', 'paymob')->where('event_id', $eventId)->update([
-                'status' => 'processed',
-                'processed_at' => now(),
-            ]);
+            $this->events->markProcessed('paymob', $eventId);
             return $updated;
         });
 

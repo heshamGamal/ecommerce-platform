@@ -22,7 +22,7 @@ final class StaffRequest extends FormRequest
             return [];
         }
 
-        $id = $this->route('id');
+        $id = $this->route('staffId');
 
         return [
             'name' => ['required', 'string', 'max:255'],

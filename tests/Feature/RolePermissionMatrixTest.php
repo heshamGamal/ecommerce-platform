@@ -25,15 +25,15 @@ final class RolePermissionMatrixTest extends TestCase
         $customer = $this->userWithRole('customer');
 
         $this->actingAs($customer)
-            ->getJson('/api/customer/profile')
+            ->getJson('/api/v1/customer/profile')
             ->assertOk();
 
         $this->actingAs($customer)
-            ->postJson('/api/products', [])
+            ->postJson('/api/v1/products', [])
             ->assertForbidden();
 
         $this->actingAs($customer)
-            ->putJson('/api/settings/store.name', ['value' => 'Blocked'])
+            ->putJson('/api/v1/settings/store.name', ['value' => 'Blocked'])
             ->assertForbidden();
 
         $this->assertPermission($customer, 'customer.profile.view', true);
@@ -46,7 +46,7 @@ final class RolePermissionMatrixTest extends TestCase
         $manager = $this->userWithRole('product_manager');
 
         $this->actingAs($manager)
-            ->postJson('/api/products', [])
+            ->postJson('/api/v1/products', [])
             ->assertStatus(422);
 
         $this->assertPermission($manager, 'products.create', true);
@@ -64,7 +64,7 @@ final class RolePermissionMatrixTest extends TestCase
         ]);
 
         $this->actingAs($manager)
-            ->deleteJson("/api/products/{$product->id}")
+            ->deleteJson("/api/v1/products/{$product->id}")
             ->assertForbidden();
 
         $this->assertPermission($manager, 'orders.manage', true);

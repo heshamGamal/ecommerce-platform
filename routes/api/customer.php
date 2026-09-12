@@ -20,11 +20,11 @@ Route::middleware('auth')->group(function (): void {
     Route::get('customer/addresses', [CustomerFeaturesController::class, 'addresses'])->name('customer.addresses.index');
     Route::get('customer/addresses/default', [CustomerFeaturesController::class, 'defaultAddress'])->name('customer.addresses.default');
     Route::post('customer/addresses', [CustomerFeaturesController::class, 'addAddress'])->name('customer.addresses.store');
-    Route::match(['put', 'patch'], 'customer/addresses/{id}', [CustomerFeaturesController::class, 'updateAddress'])->name('customer.addresses.update');
-    Route::delete('customer/addresses/{id}', [CustomerFeaturesController::class, 'deleteAddress'])->name('customer.addresses.destroy');
+    Route::match(['put', 'patch'], 'customer/addresses/{addressId}', [CustomerFeaturesController::class, 'updateAddress'])->name('customer.addresses.update');
+    Route::delete('customer/addresses/{addressId}', [CustomerFeaturesController::class, 'deleteAddress'])->name('customer.addresses.destroy');
     Route::get('customer/orders', [OrderController::class, 'customerIndex'])->name('customer.orders.index');
-    Route::get('customer/orders/{id}', [OrderController::class, 'customerShow'])->name('customer.orders.show');
-    Route::post('customer/orders/{id}/cancel', [OrderController::class, 'customerCancel'])->name('customer.orders.cancel');
+    Route::get('customer/orders/{orderId}', [OrderController::class, 'customerShow'])->name('customer.orders.show');
+    Route::post('customer/orders/{orderId}/cancel', [OrderController::class, 'customerCancel'])->name('customer.orders.cancel');
     Route::get('customer/returns', [ReturnController::class, 'customerIndex'])->name('customer.returns.index');
     Route::post('customer/orders/{order}/returns', [ReturnController::class, 'store'])->middleware('throttle:return-create')->name('customer.returns.store');
     Route::post('customer/orders/{orderId}/payments', [PaymentController::class, 'store'])->middleware('throttle:payment-create')->name('customer.payments.store');
@@ -43,7 +43,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('customer/preferences', [CustomerFeaturesController::class, 'preferences'])->name('customer.preferences.show');
     Route::put('customer/preferences', [CustomerFeaturesController::class, 'updatePreferences'])->name('customer.preferences.update');
     Route::get('customer/notifications', [CustomerFeaturesController::class, 'notifications'])->name('customer.notifications.index');
-    Route::patch('customer/notifications/{id}/read', [CustomerFeaturesController::class, 'readNotification'])->name('customer.notifications.read');
+    Route::patch('customer/notifications/{notificationId}/read', [CustomerFeaturesController::class, 'readNotification'])->name('customer.notifications.read');
     Route::get('products/{product}/reviews', [ProductReviewController::class, 'index'])->name('customer.reviews.index');
     Route::post('products/{product}/reviews', [ProductReviewController::class, 'store'])->name('customer.reviews.store');
     Route::get('reviews', [ProductReviewController::class, 'adminIndex'])->name('reviews.index');

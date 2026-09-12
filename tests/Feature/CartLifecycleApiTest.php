@@ -25,7 +25,7 @@ final class CartLifecycleApiTest extends TestCase
         $variant = ProductVariant::query()->create(['product_id' => $product->id, 'sku' => 'VAR-1', 'price' => 250, 'status' => 'active', 'combination_hash' => 'test-var-1']);
         InventoryItem::query()->create(['product_id' => $product->id, 'variant_id' => $variant->id, 'on_hand' => 5, 'reserved' => 0]);
 
-        $this->actingAs($customer)->postJson('/api/customer/cart/items', ['product_id' => $product->id, 'variant_id' => $variant->id, 'quantity' => 2])
+        $this->actingAs($customer)->postJson('/api/v1/customer/cart/items', ['product_id' => $product->id, 'variant_id' => $variant->id, 'quantity' => 2])
             ->assertCreated()->assertJsonPath('data.totals.subtotal', 500);
     }
 
@@ -36,9 +36,9 @@ final class CartLifecycleApiTest extends TestCase
         $product = $this->product();
         InventoryItem::query()->create(['product_id' => $product->id, 'variant_id' => null, 'on_hand' => 1, 'reserved' => 0]);
 
-        $this->actingAs($customer)->postJson('/api/customer/cart/items', ['product_id' => $product->id, 'quantity' => 2])->assertUnprocessable();
-        $this->actingAs($customer)->postJson('/api/customer/cart/items', ['product_id' => $product->id, 'quantity' => 1])->assertCreated();
-        $this->actingAs($customer)->deleteJson('/api/customer/cart')->assertOk()->assertJsonCount(0, 'data.items');
+        $this->actingAs($customer)->postJson('/api/v1/customer/cart/items', ['product_id' => $product->id, 'quantity' => 2])->assertUnprocessable();
+        $this->actingAs($customer)->postJson('/api/v1/customer/cart/items', ['product_id' => $product->id, 'quantity' => 1])->assertCreated();
+        $this->actingAs($customer)->deleteJson('/api/v1/customer/cart')->assertOk()->assertJsonCount(0, 'data.items');
     }
 
     public function test_abandoned_cart_is_marked_and_notified_only_once(): void
@@ -46,7 +46,7 @@ final class CartLifecycleApiTest extends TestCase
         $this->seed(RbacSeeder::class);
         $customer = $this->userWithRole('customer');
         $product = $this->product();
-        $this->actingAs($customer)->postJson('/api/customer/cart/items', ['product_id' => $product->id, 'quantity' => 1])->assertCreated();
+        $this->actingAs($customer)->postJson('/api/v1/customer/cart/items', ['product_id' => $product->id, 'quantity' => 1])->assertCreated();
         CustomerCart::query()->where('user_id', $customer->id)->update(['last_activity_at' => now()->subHours(48)]);
 
         $this->artisan('cart:mark-abandoned')->assertExitCode(0);

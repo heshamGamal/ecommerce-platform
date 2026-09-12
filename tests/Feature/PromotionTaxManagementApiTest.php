@@ -17,21 +17,21 @@ final class PromotionTaxManagementApiTest extends TestCase
         $this->seed(RbacSeeder::class);
         $admin = User::factory()->create();
         $admin->roles()->attach(Role::query()->where('slug', 'admin')->firstOrFail());
-        $coupon = $this->actingAs($admin)->postJson('/api/coupons', ['code' => 'save10', 'type' => 'percent', 'value' => 10, 'is_active' => true])->assertCreated()->json('data.id');
-        $this->actingAs($admin)->getJson('/api/coupons')->assertOk()->assertJsonPath('data.0.code', 'SAVE10');
-        $this->actingAs($admin)->patchJson("/api/coupons/{$coupon}", ['value' => 15])->assertOk()->assertJsonPath('data.value', 15);
-        $tax = $this->actingAs($admin)->postJson('/api/tax-rules', ['name' => 'Egypt VAT', 'country' => 'eg', 'rate' => 14])->assertCreated()->json('data.id');
-        $this->actingAs($admin)->getJson('/api/tax-rules')->assertOk()->assertJsonPath('data.0.name', 'Egypt VAT');
-        $this->actingAs($admin)->deleteJson("/api/tax-rules/{$tax}")->assertNoContent();
-        $this->actingAs($admin)->deleteJson("/api/coupons/{$coupon}")->assertNoContent();
+        $coupon = $this->actingAs($admin)->postJson('/api/v1/coupons', ['code' => 'save10', 'type' => 'percent', 'value' => 10, 'is_active' => true])->assertCreated()->json('data.id');
+        $this->actingAs($admin)->getJson('/api/v1/coupons')->assertOk()->assertJsonPath('data.0.code', 'SAVE10');
+        $this->actingAs($admin)->patchJson("/api/v1/coupons/{$coupon}", ['value' => 15])->assertOk()->assertJsonPath('data.value', 15);
+        $tax = $this->actingAs($admin)->postJson('/api/v1/tax-rules', ['name' => 'Egypt VAT', 'country' => 'eg', 'rate' => 14])->assertCreated()->json('data.id');
+        $this->actingAs($admin)->getJson('/api/v1/tax-rules')->assertOk()->assertJsonPath('data.0.name', 'Egypt VAT');
+        $this->actingAs($admin)->deleteJson("/api/v1/tax-rules/{$tax}")->assertNoContent();
+        $this->actingAs($admin)->deleteJson("/api/v1/coupons/{$coupon}")->assertNoContent();
     }
     public function test_customer_cannot_manage_promotions_or_taxes(): void
     {
         $this->seed(RbacSeeder::class);
         $customer = User::factory()->create();
         $customer->roles()->attach(Role::query()->where('slug', 'customer')->firstOrFail());
-        $this->actingAs($customer)->getJson('/api/coupons')->assertForbidden();
-        $this->actingAs($customer)->getJson('/api/tax-rules')->assertForbidden();
+        $this->actingAs($customer)->getJson('/api/v1/coupons')->assertForbidden();
+        $this->actingAs($customer)->getJson('/api/v1/tax-rules')->assertForbidden();
     }
 
     public function test_coupon_management_validates_business_values_and_usage_limits_are_enforced(): void
@@ -39,8 +39,8 @@ final class PromotionTaxManagementApiTest extends TestCase
         $this->seed(RbacSeeder::class);
         $admin = $this->userWithRole('admin');
 
-        $this->actingAs($admin)->postJson('/api/coupons', [])->assertUnprocessable();
-        $this->actingAs($admin)->postJson('/api/coupons', [
+        $this->actingAs($admin)->postJson('/api/v1/coupons', [])->assertUnprocessable();
+        $this->actingAs($admin)->postJson('/api/v1/coupons', [
             'code' => 'too-high', 'type' => 'percent', 'value' => 101,
         ])->assertUnprocessable()->assertJsonValidationErrors('value');
 

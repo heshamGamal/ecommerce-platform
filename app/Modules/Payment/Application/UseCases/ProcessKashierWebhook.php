@@ -2,7 +2,6 @@
 
 namespace App\Modules\Payment\Application\UseCases;
 
-use App\Models\PaymentWebhookEvent;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
 use App\Modules\Order\Domain\Contracts\TransactionManagerInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
@@ -10,6 +9,7 @@ use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
 use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;
 use App\Modules\Payment\Domain\Contracts\KashierWebhookVerifierInterface;
+use App\Modules\Payment\Domain\Contracts\PaymentWebhookEventRepositoryInterface;
 
 final class ProcessKashierWebhook
 {
@@ -19,6 +19,7 @@ final class ProcessKashierWebhook
         private readonly OrderRepositoryInterface $orders,
         private readonly TransactionManagerInterface $transactions,
         private readonly KashierWebhookVerifierInterface $verifier,
+        private readonly PaymentWebhookEventRepositoryInterface $events,
     ) {
     }
 
@@ -34,6 +35,21 @@ final class ProcessKashierWebhook
             throw new PaymentException('Kashier webhook is missing its payment reference.');
         }
 
+        $event = $this->events->recordOrGet([
+                'provider' => 'kashier',
+                'event_id' => $eventId,
+                'event_type' => 'payment',
+                'status' => 'received',
+                'payment_reference' => (string) ($payload['orderId'] ?? $eventId),
+                'payload' => $payload,
+            ]);
+        if ($event->status === 'processed') {
+            return null;
+        }
+        if (! array_key_exists('paymentStatus', $payload) || ! array_key_exists('amount', $payload)) {
+            throw new PaymentException('Kashier webhook event payload is invalid.');
+        }
+
         $payment = $this->payments->findByIdempotencyKey($merchantOrderId);
         $payment ??= $this->payments->findByProviderReference((string) ($payload['orderId'] ?? ''));
         if ($payment === null) {
@@ -43,29 +59,10 @@ final class ProcessKashierWebhook
             throw new PaymentAmountMismatchException('Kashier webhook amount does not match the local payment.');
         }
 
-        try {
-            PaymentWebhookEvent::query()->create([
-                'provider' => 'kashier',
-                'event_id' => $eventId,
-                'event_type' => 'payment',
-                'status' => 'received',
-                'payment_reference' => (string) ($payload['orderId'] ?? $eventId),
-                'payload' => $payload,
-            ]);
-        } catch (\Throwable $exception) {
-            $existingEvent = PaymentWebhookEvent::query()->where('provider', 'kashier')->where('event_id', $eventId)->first();
-            if ($existingEvent?->status === 'processed') {
-                return null;
-            }
-            if ($existingEvent === null) {
-                throw $exception;
-            }
-        }
-
         $paid = strtoupper((string) ($payload['paymentStatus'] ?? '')) === 'SUCCESS';
         $status = $paid ? 'confirmed' : 'failed';
         if (in_array($payment->status, ['confirmed', 'paid', 'refunded'], true) && $status !== 'confirmed') {
-            PaymentWebhookEvent::query()->where('provider', 'kashier')->where('event_id', $eventId)->update(['status' => 'processed', 'processed_at' => now()]);
+            $this->events->markProcessed('kashier', $eventId);
             return $payment;
         }
         $metadata = array_merge((array) $payment->metadata, [
@@ -82,10 +79,7 @@ final class ProcessKashierWebhook
             if ($status === 'confirmed' && $updated->order->status === 'pending') {
                 $this->orders->updateStatus((int) $updated->order_id, 'confirmed');
             }
-            PaymentWebhookEvent::query()->where('provider', 'kashier')->where('event_id', $eventId)->update([
-                'status' => 'processed',
-                'processed_at' => now(),
-            ]);
+            $this->events->markProcessed('kashier', $eventId);
             return $updated;
         });
     }

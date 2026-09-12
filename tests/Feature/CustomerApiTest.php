@@ -28,13 +28,13 @@ final class CustomerApiTest extends TestCase
         $customer->roles()->attach(Role::query()->where('slug', 'customer')->firstOrFail());
 
         $this->actingAs($customer)
-            ->getJson('/api/customer/profile')
+            ->getJson('/api/v1/customer/profile')
             ->assertOk()
             ->assertJsonPath('data.id', $customer->id)
             ->assertJsonPath('data.name', 'Old Name');
 
         $this->actingAs($customer)
-            ->patchJson('/api/customer/profile', [
+            ->patchJson('/api/v1/customer/profile', [
                 'name' => 'New Name',
                 'email' => 'new@example.com',
                 'phone' => '01111111111',
@@ -46,14 +46,14 @@ final class CustomerApiTest extends TestCase
 
     public function test_guest_cannot_access_customer_profile(): void
     {
-        $this->getJson('/api/customer/profile')->assertUnauthorized();
-        $this->patchJson('/api/customer/profile', [])->assertUnauthorized();
+        $this->getJson('/api/v1/customer/profile')->assertUnauthorized();
+        $this->patchJson('/api/v1/customer/profile', [])->assertUnauthorized();
     }
 
     public function test_authenticated_user_without_customer_permission_is_forbidden(): void
     {
         $this->actingAs(User::factory()->create())
-            ->getJson('/api/customer/profile')
+            ->getJson('/api/v1/customer/profile')
             ->assertForbidden()
             ->assertJsonPath('message', 'Missing permission: customer.profile.view.');
     }
@@ -65,7 +65,7 @@ final class CustomerApiTest extends TestCase
         User::factory()->create(['email' => 'taken@example.com']);
 
         $this->actingAs($customer)
-            ->patchJson('/api/customer/profile', [
+            ->patchJson('/api/v1/customer/profile', [
                 'name' => 'Valid Name',
                 'email' => 'taken@example.com',
             ])

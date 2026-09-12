@@ -10,7 +10,7 @@ final class PromotionManagementRequest extends FormRequest
     public function rules(): array
     {
         $required = $this->isMethod('post') || $this->isMethod('put') ? 'required' : 'sometimes';
-        $couponId = $this->route('id');
+        $couponId = $this->route('couponId');
 
         return [
             'code' => [$required, 'string', 'max:80', 'regex:/^[A-Za-z0-9_-]+$/', Rule::unique('coupons', 'code')->ignore($couponId)],

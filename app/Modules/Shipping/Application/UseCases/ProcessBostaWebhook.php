@@ -21,12 +21,6 @@ final class ProcessBostaWebhook
     {
         $reference = (string) ($payload['trackingNumber'] ?? $payload['_id'] ?? '');
         $businessReference = (string) ($payload['businessReference'] ?? '');
-        $shipment = $reference !== '' ? $this->shipments->findByProviderReference($reference) : null;
-        $shipment ??= $businessReference !== '' ? $this->shipments->findByIdempotencyKey($businessReference) : null;
-        if ($shipment === null) {
-            throw new ShippingException('Bosta webhook does not match a local shipment.');
-        }
-
         $eventId = hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
         $event = $this->events->recordOrGet([
             'provider' => 'bosta',
@@ -37,7 +31,18 @@ final class ProcessBostaWebhook
             'payload' => $payload,
         ]);
         if ($event->status === 'processed') {
-            return $shipment;
+            return null;
+        }
+        if ($reference === '' && $businessReference === '') {
+            throw new ShippingException('Bosta webhook event payload is invalid.');
+        }
+        if (! array_key_exists('state', $payload)) {
+            throw new ShippingException('Bosta webhook event payload is missing its state.');
+        }
+        $shipment = $reference !== '' ? $this->shipments->findByProviderReference($reference) : null;
+        $shipment ??= $businessReference !== '' ? $this->shipments->findByIdempotencyKey($businessReference) : null;
+        if ($shipment === null) {
+            throw new ShippingException('Bosta webhook does not match a local shipment.');
         }
 
         $status = match ((int) ($payload['state'] ?? 0)) {

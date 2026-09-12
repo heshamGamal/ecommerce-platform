@@ -23,9 +23,9 @@ final class OrderCrudApiTest extends TestCase
         $owned = CustomerOrder::query()->create(['user_id' => $customer->id, 'status' => 'pending', 'total_amount' => 100, 'currency' => 'EGP']);
         $foreign = CustomerOrder::query()->create(['user_id' => $other->id, 'status' => 'pending', 'total_amount' => 200, 'currency' => 'EGP']);
 
-        $this->actingAs($customer)->getJson('/api/customer/orders')->assertOk()->assertJsonCount(1, 'data');
-        $this->actingAs($customer)->getJson("/api/customer/orders/{$owned->id}")->assertOk()->assertJsonPath('data.id', $owned->id);
-        $this->actingAs($customer)->getJson("/api/customer/orders/{$foreign->id}")->assertNotFound();
+        $this->actingAs($customer)->getJson('/api/v1/customer/orders')->assertOk()->assertJsonCount(1, 'data');
+        $this->actingAs($customer)->getJson("/api/v1/customer/orders/{$owned->id}")->assertOk()->assertJsonPath('data.id', $owned->id);
+        $this->actingAs($customer)->getJson("/api/v1/customer/orders/{$foreign->id}")->assertNotFound();
     }
 
     public function test_order_manager_can_update_status_and_invalid_transition_is_conflict(): void
@@ -34,9 +34,9 @@ final class OrderCrudApiTest extends TestCase
         $manager = $this->userWithRole('order_manager');
         $order = CustomerOrder::query()->create(['user_id' => User::factory()->create()->id, 'status' => 'pending', 'total_amount' => 100, 'currency' => 'EGP']);
 
-        $this->actingAs($manager)->patchJson("/api/orders/{$order->id}/status", ['status' => 'confirmed'])
+        $this->actingAs($manager)->patchJson("/api/v1/orders/{$order->id}/status", ['status' => 'confirmed'])
             ->assertOk()->assertJsonPath('data.status', 'confirmed');
-        $this->actingAs($manager)->patchJson("/api/orders/{$order->id}/status", ['status' => 'delivered'])
+        $this->actingAs($manager)->patchJson("/api/v1/orders/{$order->id}/status", ['status' => 'delivered'])
             ->assertConflict();
     }
 
@@ -47,9 +47,9 @@ final class OrderCrudApiTest extends TestCase
         $pending = CustomerOrder::query()->create(['user_id' => $customer->id, 'status' => 'pending', 'total_amount' => 100, 'currency' => 'EGP']);
         $delivered = CustomerOrder::query()->create(['user_id' => $customer->id, 'status' => 'delivered', 'total_amount' => 100, 'currency' => 'EGP']);
 
-        $this->actingAs($customer)->postJson("/api/customer/orders/{$pending->id}/cancel")
+        $this->actingAs($customer)->postJson("/api/v1/customer/orders/{$pending->id}/cancel")
             ->assertOk()->assertJsonPath('data.status', 'cancelled');
-        $this->actingAs($customer)->postJson("/api/customer/orders/{$delivered->id}/cancel")
+        $this->actingAs($customer)->postJson("/api/v1/customer/orders/{$delivered->id}/cancel")
             ->assertConflict();
     }
 
@@ -74,7 +74,7 @@ final class OrderCrudApiTest extends TestCase
             'product_id' => $product->id, 'on_hand' => 5, 'reserved' => 2,
         ]);
 
-        $this->actingAs($manager)->patchJson("/api/orders/{$order->id}/status", ['status' => 'shipped'])
+        $this->actingAs($manager)->patchJson("/api/v1/orders/{$order->id}/status", ['status' => 'shipped'])
             ->assertOk()->assertJsonPath('data.status', 'shipped');
 
         $this->assertDatabaseHas('inventory_items', [

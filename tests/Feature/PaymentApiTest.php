@@ -20,11 +20,11 @@ final class PaymentApiTest extends TestCase
         $customer = $this->userWithRole('customer');
         $order = $this->orderFor($customer, 1500);
 
-        $this->actingAs($customer)->postJson("/api/customer/orders/{$order->id}/payments", [
+        $this->actingAs($customer)->postJson("/api/v1/customer/orders/{$order->id}/payments", [
             'method' => 'cash_on_delivery', 'currency' => 'EGP', 'amount' => 1500, 'idempotency_key' => 'payment-1',
         ])->assertCreated()->assertJsonPath('data.status', 'pending')->assertJsonPath('data.amount', 1500);
 
-        $this->actingAs($customer)->getJson("/api/customer/orders/{$order->id}/payments")
+        $this->actingAs($customer)->getJson("/api/v1/customer/orders/{$order->id}/payments")
             ->assertOk()->assertJsonCount(1, 'data');
     }
 
@@ -35,8 +35,8 @@ final class PaymentApiTest extends TestCase
         $order = $this->orderFor($customer, 1500);
         $payload = ['method' => 'cash_on_delivery', 'currency' => 'EGP', 'idempotency_key' => 'same-payment'];
 
-        $first = $this->actingAs($customer)->postJson("/api/customer/orders/{$order->id}/payments", $payload);
-        $second = $this->actingAs($customer)->postJson("/api/customer/orders/{$order->id}/payments", $payload);
+        $first = $this->actingAs($customer)->postJson("/api/v1/customer/orders/{$order->id}/payments", $payload);
+        $second = $this->actingAs($customer)->postJson("/api/v1/customer/orders/{$order->id}/payments", $payload);
 
         $first->assertCreated();
         $second->assertCreated()->assertJsonPath('data.id', $first->json('data.id'));
@@ -49,7 +49,7 @@ final class PaymentApiTest extends TestCase
         $customer = $this->userWithRole('customer');
         $order = $this->orderFor($customer, 1500);
 
-        $this->actingAs($customer)->postJson("/api/customer/orders/{$order->id}/payments", [
+        $this->actingAs($customer)->postJson("/api/v1/customer/orders/{$order->id}/payments", [
             'method' => 'cash_on_delivery', 'currency' => 'EGP', 'amount' => 1499, 'idempotency_key' => 'bad-payment',
         ])->assertUnprocessable();
     }
@@ -66,13 +66,13 @@ final class PaymentApiTest extends TestCase
             'status' => 'pending', 'idempotency_key' => 'owner-payment',
         ]);
 
-        $this->actingAs($owner)->postJson("/api/payments/{$payment->id}/confirm")
+        $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/confirm")
             ->assertOk()->assertJsonPath('data.status', 'paid');
         $this->assertDatabaseHas('customer_orders', ['id' => $order->id, 'status' => 'confirmed']);
-        $this->actingAs($owner)->postJson("/api/payments/{$payment->id}/refund")
+        $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/refund")
             ->assertOk()->assertJsonPath('data.status', 'refunded');
         $this->assertDatabaseHas('customer_orders', ['id' => $order->id, 'status' => 'refunded']);
-        $this->actingAs($owner)->postJson("/api/payments/{$payment->id}/refund")
+        $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/refund")
             ->assertConflict();
     }
 

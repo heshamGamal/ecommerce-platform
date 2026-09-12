@@ -36,7 +36,7 @@ final class CheckoutApiTest extends TestCase
         $cart->items()->create(['product_id' => $product->id, 'quantity' => 2]);
         InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 5, 'reserved' => 0]);
 
-        $response = $this->actingAs($user)->postJson('/api/customer/checkout', [
+        $response = $this->actingAs($user)->postJson('/api/v1/customer/checkout', [
             'address_id' => $address->id,
             'currency' => 'EGP',
             'idempotency_key' => 'checkout-test-1',
@@ -63,7 +63,7 @@ final class CheckoutApiTest extends TestCase
         ]);
         InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 3, 'reserved' => 0]);
 
-        $response = $this->postJson('/api/customer/checkout', [
+        $response = $this->postJson('/api/v1/customer/checkout', [
             'items' => [['product_id' => $product->id, 'quantity' => 2]],
             'guest' => [
                 'name' => 'Guest Customer', 'email' => 'guest@example.com', 'phone' => '01000000000',
@@ -81,7 +81,7 @@ final class CheckoutApiTest extends TestCase
 
     public function test_guest_checkout_is_rejected_by_default(): void
     {
-        $this->postJson('/api/customer/checkout', [])->assertUnauthorized();
+        $this->postJson('/api/v1/customer/checkout', [])->assertUnauthorized();
     }
 
     public function test_checkout_is_idempotent_for_the_same_key(): void
@@ -101,8 +101,8 @@ final class CheckoutApiTest extends TestCase
         InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 1, 'reserved' => 0]);
 
         $payload = ['address_id' => $address->id, 'idempotency_key' => 'same-key'];
-        $first = $this->actingAs($user)->postJson('/api/customer/checkout', $payload);
-        $second = $this->actingAs($user)->postJson('/api/customer/checkout', $payload);
+        $first = $this->actingAs($user)->postJson('/api/v1/customer/checkout', $payload);
+        $second = $this->actingAs($user)->postJson('/api/v1/customer/checkout', $payload);
 
         $first->assertCreated();
         $second->assertCreated()->assertJsonPath('data.id', $first->json('data.id'));
@@ -121,7 +121,7 @@ final class CheckoutApiTest extends TestCase
         Coupon::query()->create(['code' => 'SAVE10', 'type' => 'percent', 'value' => 10, 'is_active' => true]);
         TaxRule::query()->create(['name' => 'Egypt VAT', 'country' => 'EG', 'rate' => 14, 'is_active' => true]);
 
-        $this->actingAs($user)->postJson('/api/customer/checkout', ['address_id' => $address->id, 'coupon_code' => 'save10'])
+        $this->actingAs($user)->postJson('/api/v1/customer/checkout', ['address_id' => $address->id, 'coupon_code' => 'save10'])
             ->assertCreated()->assertJsonPath('data.subtotal_amount', 1000)->assertJsonPath('data.discount_amount', 100)
             ->assertJsonPath('data.tax_amount', 126)->assertJsonPath('data.total_amount', 1026)->assertJsonPath('data.coupon_code', 'SAVE10');
         $this->assertDatabaseCount('coupon_usages', 1);
@@ -147,7 +147,7 @@ final class CheckoutApiTest extends TestCase
             'currency' => 'EGP', 'is_active' => true,
         ]);
 
-        $response = $this->actingAs($user)->postJson('/api/customer/checkout', [
+        $response = $this->actingAs($user)->postJson('/api/v1/customer/checkout', [
             'address_id' => $address->id,
             'currency' => 'EGP',
             'idempotency_key' => 'full-flow-order',
@@ -183,7 +183,7 @@ final class CheckoutApiTest extends TestCase
         $cart->items()->create(['product_id' => $product->id, 'quantity' => 2]);
         InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 5, 'reserved' => 0]);
 
-        $this->actingAs($user)->postJson('/api/customer/checkout', [
+        $this->actingAs($user)->postJson('/api/v1/customer/checkout', [
             'address_id' => $address->id,
             'currency' => 'EGP',
             'idempotency_key' => 'rollback-order',

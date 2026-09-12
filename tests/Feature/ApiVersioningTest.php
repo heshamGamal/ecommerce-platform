@@ -7,28 +7,21 @@ use Tests\TestCase;
 
 final class ApiVersioningTest extends TestCase
 {
-    public function test_v1_exposes_the_same_route_surface_with_versioned_names(): void
+    public function test_only_v1_routes_are_registered(): void
     {
-        $legacy = [];
-        $versioned = [];
-
+        $apiRoutes = [];
         foreach (Route::getRoutes() as $route) {
-            $uri = $route->uri();
-            $name = $route->getName();
-            if ($name === null || ! str_starts_with($uri, 'api/')) {
-                continue;
-            }
-            $signature = implode('|', $route->methods()).'|'.preg_replace('#^api/v1/#', 'api/', $uri);
-            if (str_starts_with($name, 'v1.')) {
-                $versioned[$signature] = $name;
-            } elseif (! str_starts_with($name, 'v1.')) {
-                $legacy[$signature] = $name;
+            if ($route->getName() !== null && str_starts_with($route->uri(), 'api/')) {
+                $apiRoutes[] = $route;
             }
         }
 
-        $this->assertCount(count($legacy), $versioned);
-        $this->assertSame(array_keys($legacy), array_keys($versioned));
-        $this->assertSame('v1.customer.checkout', $versioned['POST|api/customer/checkout']);
-        $this->assertSame('v1.webhooks.paymob', $versioned['POST|api/webhooks/paymob']);
+        $this->assertCount(119, $apiRoutes);
+        $this->assertTrue(collect($apiRoutes)->every(
+            static fn ($route): bool => str_starts_with($route->uri(), 'api/v1/')
+        ));
+        $this->assertNotNull(Route::getRoutes()->getByName('customer.checkout'));
+        $this->assertNotNull(Route::getRoutes()->getByName('webhooks.paymob'));
+        $this->assertNull(Route::getRoutes()->getByName('v1.customer.checkout'));
     }
 }
