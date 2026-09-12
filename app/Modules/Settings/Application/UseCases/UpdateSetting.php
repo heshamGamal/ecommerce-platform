@@ -3,7 +3,7 @@
 namespace App\Modules\Settings\Application\UseCases;
 
 use App\Models\Setting;
-use App\Modules\Settings\Application\DTOs\SettingData;
+use App\Modules\Settings\Domain\ValueObjects\SettingData;
 use App\Modules\Settings\Domain\Contracts\SettingsRepositoryInterface;
 
 final class UpdateSetting

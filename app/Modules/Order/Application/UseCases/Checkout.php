@@ -4,7 +4,7 @@ namespace App\Modules\Order\Application\UseCases;
 
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
-use App\Modules\Order\Application\DTOs\CheckoutData;
+use App\Modules\Order\Domain\ValueObjects\CheckoutData;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
 use App\Models\CustomerOrder;
 

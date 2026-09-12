@@ -2,7 +2,7 @@
 namespace App\Modules\Catalog\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Catalog\Application\DTOs\BrandData;
+use App\Modules\Catalog\Domain\ValueObjects\BrandData;
 use App\Modules\Catalog\Application\UseCases\Brands\CreateBrand;
 use App\Modules\Catalog\Application\UseCases\Brands\DeleteBrand;
 use App\Modules\Catalog\Application\UseCases\Brands\GetBrand;

@@ -1,6 +1,6 @@
 <?php
 namespace App\Modules\Settings\Infrastructure\Persistence;
-use App\Models\Setting;use App\Modules\Settings\Application\DTOs\SettingData;use App\Modules\Settings\Domain\Contracts\SettingsRepositoryInterface;use Illuminate\Support\Collection;
+use App\Models\Setting;use App\Modules\Settings\Domain\ValueObjects\SettingData;use App\Modules\Settings\Domain\Contracts\SettingsRepositoryInterface;use Illuminate\Support\Collection;
 class EloquentSettingsRepository implements SettingsRepositoryInterface
 {
  public function findByKey(string $key):?Setting{return Setting::query()->where('key',$key)->first();}

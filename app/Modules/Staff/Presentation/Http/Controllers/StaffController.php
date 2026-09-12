@@ -1,6 +1,6 @@
 <?php
 namespace App\Modules\Staff\Presentation\Http\Controllers;
-use App\Http\Controllers\Controller;use App\Modules\Staff\Application\DTOs\StaffData;use App\Modules\Staff\Application\UseCases\CreateStaff;use App\Modules\Staff\Application\UseCases\DeleteStaff;use App\Modules\Staff\Application\UseCases\GetStaff;use App\Modules\Staff\Application\UseCases\ListStaff;use App\Modules\Staff\Application\UseCases\UpdateStaff;use App\Modules\Staff\Presentation\Http\Requests\StaffRequest;use Illuminate\Http\JsonResponse;
+use App\Http\Controllers\Controller;use App\Modules\Staff\Domain\ValueObjects\StaffData;use App\Modules\Staff\Application\UseCases\CreateStaff;use App\Modules\Staff\Application\UseCases\DeleteStaff;use App\Modules\Staff\Application\UseCases\GetStaff;use App\Modules\Staff\Application\UseCases\ListStaff;use App\Modules\Staff\Application\UseCases\UpdateStaff;use App\Modules\Staff\Presentation\Http\Requests\StaffRequest;use Illuminate\Http\JsonResponse;
 final class StaffController extends Controller
 {
  public function index(StaffRequest $request,ListStaff $useCase):JsonResponse{return response()->json(['data'=>$useCase->execute()]);}

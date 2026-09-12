@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Shipping\Application\DTOs;
+namespace App\Modules\Shipping\Domain\ValueObjects;
 
 final readonly class CreateShipmentData
 {

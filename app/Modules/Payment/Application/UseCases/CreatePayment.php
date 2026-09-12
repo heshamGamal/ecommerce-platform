@@ -6,7 +6,7 @@ use App\Models\Payment;
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
-use App\Modules\Payment\Application\DTOs\PaymentData;
+use App\Modules\Payment\Domain\ValueObjects\PaymentData;
 use App\Modules\Payment\Domain\Contracts\PaymentGatewayInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;

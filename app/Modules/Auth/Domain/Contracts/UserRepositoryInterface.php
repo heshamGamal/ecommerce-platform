@@ -3,7 +3,7 @@
 namespace App\Modules\Auth\Domain\Contracts;
 
 use App\Models\User;
-use App\Modules\Auth\Application\DTOs\RegisterUserData;
+use App\Modules\Auth\Domain\ValueObjects\RegisterUserData;
 
 interface UserRepositoryInterface
 {

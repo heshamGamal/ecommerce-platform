@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Order\Application\DTOs;
+namespace App\Modules\Order\Domain\ValueObjects;
 
 final readonly class CheckoutData
 {

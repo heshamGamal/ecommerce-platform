@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Settings\Application\DTOs;
+namespace App\Modules\Settings\Domain\ValueObjects;
 
 final readonly class SettingsData
 {

@@ -2,8 +2,8 @@
 namespace App\Modules\Catalog\Infrastructure\Persistence;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use App\Modules\Catalog\Application\DTOs\ProductData;
-use App\Modules\Catalog\Application\DTOs\ProductVariantData;
+use App\Modules\Catalog\Domain\ValueObjects\ProductData;
+use App\Modules\Catalog\Domain\ValueObjects\ProductVariantData;
 use App\Modules\Catalog\Domain\Contracts\ProductRepositoryInterface;
 use App\Modules\Catalog\Domain\Exceptions\DuplicateSkuException;
 use App\Modules\Catalog\Domain\Exceptions\DuplicateSlugException;

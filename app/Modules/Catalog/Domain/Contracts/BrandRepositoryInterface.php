@@ -3,7 +3,7 @@
 namespace App\Modules\Catalog\Domain\Contracts;
 
 use App\Models\Brand;
-use App\Modules\Catalog\Application\DTOs\BrandData;
+use App\Modules\Catalog\Domain\ValueObjects\BrandData;
 use Illuminate\Support\Collection;
 
 interface BrandRepositoryInterface

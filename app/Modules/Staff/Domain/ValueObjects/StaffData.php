@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Staff\Application\DTOs;
+namespace App\Modules\Staff\Domain\ValueObjects;
 
 final readonly class StaffData
 {

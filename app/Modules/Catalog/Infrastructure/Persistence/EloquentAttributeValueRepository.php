@@ -1,7 +1,7 @@
 <?php
 namespace App\Modules\Catalog\Infrastructure\Persistence;
 use App\Models\AttributeValue;
-use App\Modules\Catalog\Application\DTOs\AttributeValueData;
+use App\Modules\Catalog\Domain\ValueObjects\AttributeValueData;
 use App\Modules\Catalog\Domain\Contracts\AttributeValueRepositoryInterface;
 use App\Modules\Catalog\Domain\Exceptions\AttributeValueNotFoundException;
 use Illuminate\Support\Collection;

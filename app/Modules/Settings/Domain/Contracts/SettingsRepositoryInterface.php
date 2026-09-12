@@ -3,7 +3,7 @@
 namespace App\Modules\Settings\Domain\Contracts;
 
 use App\Models\Setting;
-use App\Modules\Settings\Application\DTOs\SettingData;
+use App\Modules\Settings\Domain\ValueObjects\SettingData;
 use Illuminate\Support\Collection;
 
 interface SettingsRepositoryInterface

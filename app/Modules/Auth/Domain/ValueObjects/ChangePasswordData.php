@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Auth\Application\DTOs;
+namespace App\Modules\Auth\Domain\ValueObjects;
 
 final readonly class ChangePasswordData
 {

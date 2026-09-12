@@ -2,7 +2,7 @@
 namespace App\Modules\Catalog\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Catalog\Application\DTOs\CategoryData;
+use App\Modules\Catalog\Domain\ValueObjects\CategoryData;
 use App\Modules\Catalog\Application\UseCases\Categories\CreateCategory;
 use App\Modules\Catalog\Application\UseCases\Categories\DeleteCategory;
 use App\Modules\Catalog\Application\UseCases\Categories\GetCategory;

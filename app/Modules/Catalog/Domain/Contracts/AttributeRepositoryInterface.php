@@ -3,7 +3,7 @@
 namespace App\Modules\Catalog\Domain\Contracts;
 
 use App\Models\Attribute;
-use App\Modules\Catalog\Application\DTOs\AttributeData;
+use App\Modules\Catalog\Domain\ValueObjects\AttributeData;
 use Illuminate\Support\Collection;
 
 interface AttributeRepositoryInterface

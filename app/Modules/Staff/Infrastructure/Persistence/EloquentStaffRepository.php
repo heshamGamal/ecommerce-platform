@@ -4,7 +4,7 @@ namespace App\Modules\Staff\Infrastructure\Persistence;
 
 use App\Models\Role;
 use App\Models\User;
-use App\Modules\Staff\Application\DTOs\StaffData;
+use App\Modules\Staff\Domain\ValueObjects\StaffData;
 use App\Modules\Staff\Domain\Contracts\StaffRepositoryInterface;
 use App\Modules\Staff\Domain\Exceptions\StaffActionNotAllowedException;
 use App\Modules\Staff\Domain\Exceptions\StaffNotFoundException;

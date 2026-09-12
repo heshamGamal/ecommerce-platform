@@ -3,7 +3,7 @@
 namespace App\Modules\Auth\Application\UseCases;
 
 use App\Models\User;
-use App\Modules\Auth\Application\DTOs\ChangePasswordData;
+use App\Modules\Auth\Domain\ValueObjects\ChangePasswordData;
 use App\Modules\Auth\Domain\Contracts\PasswordServiceInterface;
 use App\Modules\Auth\Domain\Contracts\UserRepositoryInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;

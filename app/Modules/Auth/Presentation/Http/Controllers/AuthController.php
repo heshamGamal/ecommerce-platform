@@ -3,8 +3,8 @@
 namespace App\Modules\Auth\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Auth\Application\DTOs\ChangePasswordData;
-use App\Modules\Auth\Application\DTOs\RegisterUserData;
+use App\Modules\Auth\Domain\ValueObjects\ChangePasswordData;
+use App\Modules\Auth\Domain\ValueObjects\RegisterUserData;
 use App\Modules\Auth\Application\UseCases\ChangePassword;
 use App\Modules\Auth\Application\UseCases\GetCurrentUser;
 use App\Modules\Auth\Application\UseCases\LoginUser;

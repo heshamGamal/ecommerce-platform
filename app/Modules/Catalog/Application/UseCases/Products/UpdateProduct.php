@@ -1,7 +1,7 @@
 <?php
 namespace App\Modules\Catalog\Application\UseCases\Products;
 use App\Models\Product;
-use App\Modules\Catalog\Application\DTOs\ProductData;
+use App\Modules\Catalog\Domain\ValueObjects\ProductData;
 use App\Modules\Catalog\Domain\Contracts\ProductRepositoryInterface;
 use App\Modules\Catalog\Domain\Exceptions\DuplicateSlugException;
 use App\Modules\Catalog\Domain\Exceptions\InvalidProductTypeException;

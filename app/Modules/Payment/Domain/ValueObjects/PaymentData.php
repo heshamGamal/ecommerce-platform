@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Payment\Application\DTOs;
+namespace App\Modules\Payment\Domain\ValueObjects;
 
 final readonly class PaymentData
 {

@@ -1,7 +1,7 @@
 <?php
 namespace App\Modules\Catalog\Infrastructure\Persistence;
 use App\Models\Brand;
-use App\Modules\Catalog\Application\DTOs\BrandData;
+use App\Modules\Catalog\Domain\ValueObjects\BrandData;
 use App\Modules\Catalog\Domain\Contracts\BrandRepositoryInterface;
 use App\Modules\Catalog\Domain\Exceptions\BrandNotFoundException;
 use App\Modules\Catalog\Domain\Exceptions\DuplicateSlugException;

@@ -3,8 +3,8 @@
 namespace Tests\Unit;
 
 use App\Models\User;
-use App\Modules\Auth\Application\DTOs\ChangePasswordData;
-use App\Modules\Auth\Application\DTOs\RegisterUserData;
+use App\Modules\Auth\Domain\ValueObjects\ChangePasswordData;
+use App\Modules\Auth\Domain\ValueObjects\RegisterUserData;
 use App\Modules\Auth\Application\UseCases\ChangePassword;
 use App\Modules\Auth\Application\UseCases\AuthorizeUser;
 use App\Modules\Auth\Application\UseCases\AuthenticateUser;

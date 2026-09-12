@@ -3,7 +3,7 @@
 namespace App\Modules\Shipping\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Shipping\Application\DTOs\CreateShipmentData;
+use App\Modules\Shipping\Domain\ValueObjects\CreateShipmentData;
 use App\Modules\Shipping\Application\UseCases\CreateShipment;
 use App\Modules\Shipping\Application\UseCases\CreateShippingMethod;
 use App\Modules\Shipping\Application\UseCases\DeleteShippingMethod;

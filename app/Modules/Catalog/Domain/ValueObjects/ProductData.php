@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Catalog\Application\DTOs;
+namespace App\Modules\Catalog\Domain\ValueObjects;
 
 final readonly class ProductData
 {

@@ -3,7 +3,7 @@
 namespace App\Modules\Auth\Application\UseCases;
 
 use App\Models\User;
-use App\Modules\Auth\Application\DTOs\RegisterUserData;
+use App\Modules\Auth\Domain\ValueObjects\RegisterUserData;
 use App\Modules\Auth\Domain\Contracts\UserRepositoryInterface;
 
 final class RegisterUser

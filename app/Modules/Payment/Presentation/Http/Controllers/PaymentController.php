@@ -3,7 +3,7 @@
 namespace App\Modules\Payment\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Payment\Application\DTOs\PaymentData;
+use App\Modules\Payment\Domain\ValueObjects\PaymentData;
 use App\Modules\Payment\Application\UseCases\ConfirmPayment;
 use App\Modules\Payment\Application\UseCases\CreatePayment;
 use App\Modules\Payment\Application\UseCases\ListOrderPayments;

@@ -4,7 +4,7 @@ namespace App\Modules\Auth\Infrastructure\Persistence;
 
 use App\Models\User;
 use App\Models\Role;
-use App\Modules\Auth\Application\DTOs\RegisterUserData;
+use App\Modules\Auth\Domain\ValueObjects\RegisterUserData;
 use App\Modules\Auth\Domain\Contracts\UserRepositoryInterface;
 use Illuminate\Support\Facades\Hash;
 

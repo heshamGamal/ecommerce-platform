@@ -2,8 +2,8 @@
 namespace App\Modules\Catalog\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Catalog\Application\DTOs\ProductData;
-use App\Modules\Catalog\Application\DTOs\ProductVariantData;
+use App\Modules\Catalog\Domain\ValueObjects\ProductData;
+use App\Modules\Catalog\Domain\ValueObjects\ProductVariantData;
 use App\Modules\Catalog\Application\UseCases\Products\CreateProduct;
 use App\Modules\Catalog\Application\UseCases\Products\CreateProductVariant;
 use App\Modules\Catalog\Application\UseCases\Products\DeleteProduct;

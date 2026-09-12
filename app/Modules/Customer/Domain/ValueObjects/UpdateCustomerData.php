@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Customer\Application\DTOs;
+namespace App\Modules\Customer\Domain\ValueObjects;
 
 final readonly class UpdateCustomerData
 {

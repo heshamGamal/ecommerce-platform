@@ -2,8 +2,8 @@
 namespace App\Modules\Catalog\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Catalog\Application\DTOs\AttributeData;
-use App\Modules\Catalog\Application\DTOs\AttributeValueData;
+use App\Modules\Catalog\Domain\ValueObjects\AttributeData;
+use App\Modules\Catalog\Domain\ValueObjects\AttributeValueData;
 use App\Modules\Catalog\Application\UseCases\Attributes\CreateAttribute;
 use App\Modules\Catalog\Application\UseCases\Attributes\CreateAttributeValue;
 use App\Modules\Catalog\Application\UseCases\Attributes\DeleteAttribute;

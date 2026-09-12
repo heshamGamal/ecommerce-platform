@@ -3,7 +3,7 @@
 namespace App\Modules\Catalog\Domain\Contracts;
 
 use App\Models\Category;
-use App\Modules\Catalog\Application\DTOs\CategoryData;
+use App\Modules\Catalog\Domain\ValueObjects\CategoryData;
 use Illuminate\Support\Collection;
 
 interface CategoryRepositoryInterface

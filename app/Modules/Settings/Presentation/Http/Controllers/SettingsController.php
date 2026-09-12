@@ -2,8 +2,8 @@
 namespace App\Modules\Settings\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Settings\Application\DTOs\SettingData;
-use App\Modules\Settings\Application\DTOs\SettingsData;
+use App\Modules\Settings\Domain\ValueObjects\SettingData;
+use App\Modules\Settings\Domain\ValueObjects\SettingsData;
 use App\Modules\Settings\Application\UseCases\GetSettingRecord;
 use App\Modules\Settings\Application\UseCases\GetSettingsByGroup;
 use App\Modules\Settings\Application\UseCases\ListSettings;

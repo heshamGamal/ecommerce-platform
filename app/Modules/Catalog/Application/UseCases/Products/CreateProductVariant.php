@@ -1,7 +1,7 @@
 <?php
 namespace App\Modules\Catalog\Application\UseCases\Products;
 use App\Models\ProductVariant;
-use App\Modules\Catalog\Application\DTOs\ProductVariantData;
+use App\Modules\Catalog\Domain\ValueObjects\ProductVariantData;
 use App\Modules\Catalog\Domain\Contracts\AttributeValueRepositoryInterface;
 use App\Modules\Catalog\Domain\Contracts\ProductRepositoryInterface;
 use App\Modules\Catalog\Domain\Exceptions\DuplicateSkuException;

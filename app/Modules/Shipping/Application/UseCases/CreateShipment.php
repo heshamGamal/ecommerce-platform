@@ -6,7 +6,7 @@ use App\Models\Shipment;
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
-use App\Modules\Shipping\Application\DTOs\CreateShipmentData;
+use App\Modules\Shipping\Domain\ValueObjects\CreateShipmentData;
 use App\Modules\Shipping\Domain\Contracts\ShippingMethodRepositoryInterface;
 use App\Modules\Shipping\Domain\Contracts\ShippingRateCalculatorInterface;
 use App\Modules\Shipping\Domain\Contracts\ShipmentRepositoryInterface;

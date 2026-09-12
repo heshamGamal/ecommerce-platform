@@ -1,7 +1,7 @@
 <?php
 namespace App\Modules\Staff\Domain\Contracts;
 use App\Models\User;
-use App\Modules\Staff\Application\DTOs\StaffData;
+use App\Modules\Staff\Domain\ValueObjects\StaffData;
 interface StaffRepositoryInterface
 {
  public function list(): mixed;
