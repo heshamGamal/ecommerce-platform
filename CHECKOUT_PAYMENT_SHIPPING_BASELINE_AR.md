@@ -311,3 +311,19 @@ PUT /api/settings/payment_gateways.kashier.enabled
 ```
 
 يجب أن يكون المستخدم حاصلًا على `settings.view` للقراءة و`settings.update` للتعديل. يُنصح بقصر صلاحية `settings.update` على Owner/Admin وعدم منحها لموظفي الدعم.
+
+
+## حماية API Keys والبيانات الحساسة
+
+تمت إضافة `is_encrypted` إلى جدول الإعدادات. بيانات Paymob وKashier الحساسة تُخزّن باستخدام Laravel `Crypt` المعتمد على `APP_KEY`، ولا تظهر في API إلا كـ `********`. يتم فك التشفير داخل Infrastructure فقط عند إنشاء طلب إلى المزوّد أو التحقق من Webhook.
+
+لا يتم استخدام hash أحادي الاتجاه لتخزين مفاتيح API؛ لأن البوابة تحتاج القيمة الأصلية عند كل طلب. يتم استخدام HMAC/hash فقط لإنشاء توقيعات الطلب والتحقق من Webhooks، حيث لا نحتاج لاسترجاع القيمة الأصلية.
+
+| نوع البيانات | الحماية |
+|---|---|
+| Payment API Key وSecret Key وHMAC Secret | تشفير at rest عبر `Crypt` |
+| Webhook signature | HMAC-SHA256 أو HMAC-SHA512 حسب المزوّد |
+| Passwords | Hash أحادي الاتجاه عبر Laravel hashing |
+| API response | Masking بالقيمة `********` |
+
+يتطلب ذلك وجود `APP_KEY` ثابت وسري. تغييره يجعل القيم المشفرة القديمة غير قابلة للفك، لذلك يجب تدوير المفاتيح عبر خطة migration مخصصة وليس بتغييرها مباشرة.

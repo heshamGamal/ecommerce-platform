@@ -31,12 +31,16 @@ final class PaymentGatewaySettingsSeeder extends Seeder
 
         foreach ($settings as [$key, $value, $type, $secret, $description]) {
             $setting = Setting::query()->firstOrNew(['key' => $key]);
+            $wasExisting = $setting->exists;
+            $wasEncrypted = (bool) ($setting->is_encrypted ?? false);
+            $currentValue = $wasExisting ? $setting->getTypedValue() : $value;
             $setting->group = str_starts_with($key, 'payment_gateways.') ? 'payment_gateways' : 'payments';
             $setting->type = $type;
             $setting->description = $description;
             $setting->is_secret = $secret;
-            if (! $setting->exists) {
-                $setting->setTypedValue($value);
+            $setting->is_encrypted = $secret;
+            if (! $wasExisting || ($secret && ! $wasEncrypted)) {
+                $setting->setTypedValue($currentValue);
             }
             $setting->save();
         }

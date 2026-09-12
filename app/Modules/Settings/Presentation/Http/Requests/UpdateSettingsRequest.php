@@ -32,6 +32,7 @@ class UpdateSettingsRequest extends FormRequest
             'type' => ['required', Rule::in(['string', 'boolean', 'integer', 'float', 'json'])],
             'description' => ['nullable', 'string'],
             'is_secret' => ['sometimes', 'boolean'],
+            'is_encrypted' => ['sometimes', 'boolean'],
         ];
     }
 
