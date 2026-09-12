@@ -71,6 +71,7 @@ final class PaymentApiTest extends TestCase
         $this->assertDatabaseHas('customer_orders', ['id' => $order->id, 'status' => 'confirmed']);
         $this->actingAs($owner)->postJson("/api/payments/{$payment->id}/refund")
             ->assertOk()->assertJsonPath('data.status', 'refunded');
+        $this->assertDatabaseHas('customer_orders', ['id' => $order->id, 'status' => 'refunded']);
         $this->actingAs($owner)->postJson("/api/payments/{$payment->id}/refund")
             ->assertConflict();
     }
@@ -87,6 +88,7 @@ final class PaymentApiTest extends TestCase
     {
         $user = User::factory()->create();
         $user->roles()->attach(Role::query()->where('slug', $role)->firstOrFail());
+
         return $user;
     }
 }

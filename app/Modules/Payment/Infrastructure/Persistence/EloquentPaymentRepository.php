@@ -11,14 +11,30 @@ final class EloquentPaymentRepository implements PaymentRepositoryInterface
     public function find(int $paymentId): object
     {
         $payment = Payment::query()->with('order')->find($paymentId);
-        if ($payment === null) throw new PaymentNotFoundException('Payment not found.');
+        if ($payment === null) {
+            throw new PaymentNotFoundException('Payment not found.');
+        }
+
+        return $payment;
+    }
+
+    public function findForUpdate(int $paymentId): object
+    {
+        $payment = Payment::query()->with('order')->lockForUpdate()->find($paymentId);
+        if ($payment === null) {
+            throw new PaymentNotFoundException('Payment not found.');
+        }
+
         return $payment;
     }
 
     public function findForUserOrder(int $userId, int $orderId, int $paymentId): object
     {
         $payment = Payment::query()->with('order')->where('user_id', $userId)->where('order_id', $orderId)->find($paymentId);
-        if ($payment === null) throw new PaymentNotFoundException('Payment not found.');
+        if ($payment === null) {
+            throw new PaymentNotFoundException('Payment not found.');
+        }
+
         return $payment;
     }
 
@@ -45,6 +61,7 @@ final class EloquentPaymentRepository implements PaymentRepositoryInterface
     public function updateStatus(object $payment, string $status, array $attributes = []): object
     {
         $payment->update(array_merge($attributes, ['status' => $status]));
+
         return $payment->fresh(['order']);
     }
 }

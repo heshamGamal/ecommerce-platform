@@ -131,6 +131,22 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         });
     }
 
+    public function markRefunded(int $orderId): object
+    {
+        return DB::transaction(function () use ($orderId): object {
+            $order = CustomerOrder::query()->lockForUpdate()->find($orderId);
+            if ($order === null) {
+                throw new OrderNotFoundException('Order not found.');
+            }
+            if (in_array($order->status, ['cancelled', 'refunded'], true)) {
+                throw new OrderActionNotAllowedException('This order cannot be refunded.');
+            }
+            $order->update(['status' => 'refunded']);
+
+            return $order->fresh(['items.product']);
+        });
+    }
+
     public function checkout(int $userId, int $addressId, string $currency, ?string $idempotencyKey): object
     {
         return DB::transaction(function () use ($userId, $addressId, $currency, $idempotencyKey): object {

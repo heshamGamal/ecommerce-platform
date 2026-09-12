@@ -6,6 +6,8 @@ interface PaymentRepositoryInterface
 {
     public function find(int $paymentId): object;
 
+    public function findForUpdate(int $paymentId): object;
+
     public function findForUserOrder(int $userId, int $orderId, int $paymentId): object;
 
     public function findByIdempotencyKey(string $key): ?object;
