@@ -78,6 +78,19 @@ final class KashierGateway implements PaymentGatewayInterface
         throw new PaymentException('Kashier payments are confirmed by webhook reconciliation.');
     }
 
+    public function reconcilePayment(object $payment): array
+    {
+        $orderId = (string) ($payment->provider_reference ?: data_get($payment->metadata, 'kashier_order_id', ''));
+        if ($orderId === '') {
+            throw new PaymentException('Kashier reconciliation reference is missing.');
+        }
+        $response = $this->fepClient((string) $this->settings->value('kashier', 'secret_key', config('services.kashier.secret_key')))
+            ->get('/v3/orders/' . rawurlencode($orderId))->throw()->json();
+        $providerStatus = strtoupper((string) ($response['status'] ?? data_get($response, 'response.status', '')));
+        $status = $providerStatus === 'SUCCESS' ? 'confirmed' : ($providerStatus === 'PENDING' ? 'pending' : 'failed');
+        return ['status' => $status, 'provider_reference' => $orderId, 'metadata' => ['provider' => 'kashier', 'reconciliation' => $response]];
+    }
+
     public function refundPayment(object $payment): array
     {
         $orderId = (string) ($payment->provider_reference ?: data_get($payment->metadata, 'kashier_order_id', ''));

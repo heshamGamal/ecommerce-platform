@@ -61,6 +61,10 @@ final class ProcessKashierWebhook
 
         $paid = strtoupper((string) ($payload['paymentStatus'] ?? '')) === 'SUCCESS';
         $status = $paid ? 'confirmed' : 'failed';
+        if (in_array($payment->status, ['confirmed', 'paid', 'refunded'], true) && $status !== 'confirmed') {
+            PaymentWebhookEvent::query()->where('provider', 'kashier')->where('event_id', $eventId)->update(['status' => 'processed', 'processed_at' => now()]);
+            return $payment;
+        }
         $metadata = array_merge((array) $payment->metadata, [
             'provider' => 'kashier',
             'transaction_id' => $payload['transactionId'] ?? null,

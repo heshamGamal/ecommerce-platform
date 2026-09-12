@@ -3,9 +3,11 @@
 namespace App\Modules\Payment\Infrastructure\Persistence;
 
 use App\Models\Payment;
+use App\Models\OutboxEvent;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\PaymentNotFoundException;
 use App\Modules\Payment\Domain\ValueObjects\PaymentClaim;
+use App\Modules\Payment\Domain\StateMachines\PaymentStateMachine;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -94,6 +96,16 @@ final class EloquentPaymentRepository implements PaymentRepositoryInterface
                     'idempotency_key' => $idempotencyKey,
                     'status' => 'processing',
                 ]))->load('order');
+                OutboxEvent::query()->firstOrCreate(
+                    ['deduplication_key' => 'payment:create:' . $idempotencyKey],
+                    [
+                        'aggregate_type' => 'payment',
+                        'aggregate_id' => $payment->id,
+                        'event_type' => 'payment.create.requested',
+                        'status' => 'pending',
+                        'payload' => ['payment_id' => $payment->id, 'idempotency_key' => $idempotencyKey],
+                    ]
+                );
 
                 return new PaymentClaim($payment, true);
             } catch (QueryException $exception) {
@@ -108,6 +120,7 @@ final class EloquentPaymentRepository implements PaymentRepositoryInterface
 
     public function updateStatus(object $payment, string $status, array $attributes = []): object
     {
+        PaymentStateMachine::assert((string) $payment->status, $status);
         $payment->update(array_merge($attributes, ['status' => $status]));
 
         return $payment->fresh(['order']);

@@ -8,5 +8,6 @@ use App\Modules\Inventory\InventoryServiceProvider;
 use App\Modules\Order\OrderServiceProvider;
 use App\Modules\Payment\PaymentServiceProvider;
 use App\Modules\Shipping\ShippingServiceProvider;
+use App\Modules\Shared\SharedServiceProvider;
 use App\Providers\AppServiceProvider;
-return [AppServiceProvider::class,AuthServiceProvider::class,CatalogServiceProvider::class,CustomerServiceProvider::class,SettingsServiceProvider::class,StaffServiceProvider::class,InventoryServiceProvider::class,OrderServiceProvider::class,PaymentServiceProvider::class,ShippingServiceProvider::class];
+return [AppServiceProvider::class,AuthServiceProvider::class,CatalogServiceProvider::class,CustomerServiceProvider::class,SettingsServiceProvider::class,StaffServiceProvider::class,InventoryServiceProvider::class,OrderServiceProvider::class,PaymentServiceProvider::class,ShippingServiceProvider::class,SharedServiceProvider::class];

@@ -65,6 +65,13 @@ final class ProcessPaymobWebhook
 
         $pending = (bool) ($object['pending'] ?? false);
         $status = $pending ? 'pending' : ((bool) ($object['success'] ?? false) ? 'confirmed' : 'failed');
+        if ($status === 'pending' && $payment->status === 'provider_created') {
+            $status = 'provider_created';
+        }
+        if (in_array($payment->status, ['confirmed', 'paid', 'refunded'], true) && $status !== 'confirmed') {
+            PaymentWebhookEvent::query()->where('provider', 'paymob')->where('event_id', $eventId)->update(['status' => 'processed', 'processed_at' => now()]);
+            return $payment;
+        }
         $metadata = array_merge((array) $payment->metadata, [
             'provider' => 'paymob',
             'transaction_id' => $reference,
@@ -74,7 +81,7 @@ final class ProcessPaymobWebhook
         $result = $this->transactions->run(function () use ($payment, $status, $metadata, $eventId, $reference, $payload): object {
             $locked = $this->payments->findForUpdate((int) $payment->id);
             $updated = $this->payments->updateStatus($locked, $status, ['metadata' => $metadata]);
-            $this->operations->complete((int) $updated->id, 'create', $status === 'confirmed' ? 'confirmed' : ($status === 'failed' ? 'failed' : 'processing'), $reference, $payload);
+            $this->operations->complete((int) $updated->id, 'create', $status === 'confirmed' ? 'confirmed' : ($status === 'failed' ? 'failed' : ($status === 'provider_created' ? 'provider_created' : 'processing')), $reference, $payload);
             if ($status === 'confirmed' && $updated->order->status === 'pending') {
                 $this->orders->updateStatus((int) $updated->order_id, 'confirmed');
             }

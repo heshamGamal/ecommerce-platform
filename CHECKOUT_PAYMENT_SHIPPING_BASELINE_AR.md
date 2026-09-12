@@ -438,3 +438,33 @@ shipment_operations
 إعادة طلب إنشاء Payment أو Shipment بنفس `idempotency_key` لا تنشئ عملية جديدة. Payment الموجود في `processing` يعيد المحاولة، أما `provider_created` أو `confirmed` فيُعاد كما هو. وبالنسبة للشحن، تتم إعادة محاولة dispatch فقط عندما لا يوجد `provider_reference`.
 
 تم تجهيز `next_retry_at` في جداول العمليات لتوصيلها لاحقًا بـ Queue Job أو Outbox Worker دون تغيير الـ Domain contracts. المرحلة التالية للإنتاج هي إضافة Outbox Transactional Event وQueue Worker يعتمد على هذه السجلات، مع reconciliation polling للمزوّدين الذين لا يرسلون Webhook.
+
+
+## الإصلاحات الحرجة المضافة
+
+تمت إضافة `outbox_events` كـ Transactional Outbox، ويتم إنشاء intent الدفع أو الشحن داخل نفس معاملة Claim/Creation المحلية. تمت إضافة `outbox:dispatch` لإعادة إرسال الأحداث إلى Queue، مع `ProcessOutboxEvent` وBackoff وعدد محاولات وحد زمني لاستعادة الأحداث التي بقيت في `processing` بعد توقف Worker.
+
+تمت إضافة Reconciliation دورية:
+
+```text
+payments:reconcile   كل 5 دقائق
+shipments:reconcile  كل 10 دقائق
+outbox:dispatch       كل دقيقة
+```
+
+وتستخدم Paymob Transaction Inquiry وKashier Order Inquiry وBosta Tracking API لتصحيح الحالات التي لم يصل Webhook الخاص بها.
+
+تمت إضافة `PaymentStateMachine` و`ShipmentStateMachine` لمنع الانتقالات غير الصحيحة مثل عودة `confirmed` إلى `processing` أو عودة الشحنة من `delivered` إلى `in_transit`.
+
+تمت إضافة `shipping_webhook_events`، ويستخدم Bosta hash حتميًا للـ payload حتى لا تتم معالجة نفس الحدث مرتين. يبقى الحدث `received` إذا فشل التحديث المحلي، ولا يتحول إلى `processed` إلا بعد اكتمال الإسقاط المحلي.
+
+تمت حماية Refund بنفس نموذج العملية الموزعة؛ فإذا نجح Refund خارجيًا وفشل تحديث الدفع محليًا، تعيد المحاولة استخدام نتيجة Refund المحفوظة دون إرسال Refund ثانٍ.
+
+لتشغيل التنفيذ في الإنتاج يجب تشغيل Queue Worker وجدولة Laravel:
+
+```bash
+php artisan queue:work --tries=5
+php artisan schedule:work
+```
+
+ويجب أن يكون `QUEUE_CONNECTION=database` أو Redis مضبوطًا، مع مراقبة `failed_jobs` و`outbox_events`.

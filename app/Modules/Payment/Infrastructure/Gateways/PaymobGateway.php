@@ -83,6 +83,18 @@ final class PaymobGateway implements PaymentGatewayInterface
         throw new PaymentException('Paymob payments are confirmed by callback/webhook reconciliation.');
     }
 
+    public function reconcilePayment(object $payment): array
+    {
+        $reference = (string) data_get($payment->metadata, 'transaction_id', $payment->provider_reference);
+        if ($reference === '') {
+            throw new PaymentException('Paymob reconciliation reference is missing.');
+        }
+        $response = $this->client((string) $this->settings->value('paymob', 'secret_key', config('services.paymob.secret_key')))
+            ->get('/api/acceptance/transactions/' . rawurlencode($reference))->throw()->json();
+        $status = (bool) ($response['success'] ?? false) ? 'confirmed' : ((bool) ($response['pending'] ?? false) ? 'pending' : 'failed');
+        return ['status' => $status, 'provider_reference' => $reference, 'metadata' => ['provider' => 'paymob', 'reconciliation' => $response]];
+    }
+
     public function refundPayment(object $payment): array
     {
         $transactionId = data_get($payment->metadata, 'transaction_id', $payment->provider_reference);

@@ -12,6 +12,7 @@ use App\Modules\Shipping\Domain\Contracts\ShipmentRepositoryInterface;
 use App\Modules\Shipping\Domain\Contracts\ShippingProviderInterface;
 use App\Modules\Shipping\Domain\Contracts\ShipmentOperationRepositoryInterface;
 use App\Modules\Shipping\Domain\Exceptions\ShippingException;
+use App\Modules\Shared\Domain\Contracts\OutboxEventRepositoryInterface;
 
 final class CreateShipment
 {
@@ -23,6 +24,7 @@ final class CreateShipment
         private readonly ShipmentRepositoryInterface $shipments,
         private readonly ShippingProviderInterface $providers,
         private readonly ShipmentOperationRepositoryInterface $operations,
+        private readonly OutboxEventRepositoryInterface $outbox,
     ) {}
 
     public function execute(int $orderId, CreateShipmentData $data): object
@@ -67,10 +69,12 @@ final class CreateShipment
         try {
             $result = $this->providers->create($shipment);
             $this->operations->complete((int) $shipment->id, 'create', ($result['tracking_number'] ?? null) !== null ? 'provider_created' : 'pending', data_get($result, 'metadata.provider_reference'), $result);
-            return $this->shipments->updateProviderData($shipment, $result);
+            $this->outbox->markDispatched('shipment:create:' . $shipment->idempotency_key);
         } catch (\Throwable $exception) {
             $this->operations->fail((int) $shipment->id, 'create', $exception->getMessage());
+            $this->outbox->markFailed('shipment:create:' . $shipment->idempotency_key, $exception->getMessage());
             throw $exception;
         }
+        return $this->shipments->updateProviderData($shipment, $result);
     }
 }
