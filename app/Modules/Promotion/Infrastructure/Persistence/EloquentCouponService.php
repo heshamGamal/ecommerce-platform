@@ -14,7 +14,9 @@ final class EloquentCouponService implements CouponServiceInterface
             return ['code' => null, 'discount' => 0];
         }
         $normalized = strtoupper(trim($code));
-        $coupon = Coupon::query()->where('code', $normalized)->where('is_active', true)->first();
+        // Checkout invokes this service inside its database transaction. Locking the
+        // coupon row serializes usage-limit checks with the subsequent usage insert.
+        $coupon = Coupon::query()->where('code', $normalized)->where('is_active', true)->lockForUpdate()->first();
         $now = now();
         if ($coupon === null || ($coupon->starts_at && $coupon->starts_at->isFuture()) || ($coupon->ends_at && $coupon->ends_at->isPast())) {
             throw CouponInvalidException::forCode($normalized);
