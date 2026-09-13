@@ -20,7 +20,7 @@
 
 ## Backup
 
-استخدم `scripts/backup_postgres.sh` مع `BACKUP_DIR` على storage منفصل ومقيد الوصول. يجب تشفير storage، والتحقق من ملف `.sha256`، وتجربة restore دورية في بيئة معزولة. مثال تشغيل:
+استخدم الأمر الموحّد `php artisan backup:database`؛ يختار تلقائيًا سكربت `sqlite` أو `mysql` أو `pgsql` حسب `DB_CONNECTION`. يجب أن يكون `BACKUP_DIR` على storage منفصل ومقيد الوصول، مع تشفير storage والتحقق من ملف `.sha256` وتجربة restore دورية في بيئة معزولة. مثال PostgreSQL:
 
 ```bash
 BACKUP_DIR=/secure/backups/ecommerce \
@@ -29,7 +29,7 @@ DB_PORT=5432 \
 DB_DATABASE=ecommerce \
 DB_USERNAME=ecommerce_backup \
 DB_PASSWORD='provided-by-secret-manager' \
-./scripts/backup_postgres.sh
+php artisan backup:database --force
 ```
 
 لا يعتبر إنشاء backup ناجحًا دليلًا على قابلية الاستعادة. معيار الإغلاق هو restore test ناجح مع قياس RPO وRTO وتوثيق النتيجة.

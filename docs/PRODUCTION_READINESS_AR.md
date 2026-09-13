@@ -17,7 +17,7 @@
 | الأولوية | المانع | الدليل من المشروع | الحكم |
 | --- | --- | --- | --- |
 | P0 | تفعيل Debug في بيئة تظهر كـProduction | ناتج `php artisan about`: `Environment PROD` و`Debug Mode ENABLED` | يمنع الإطلاق حتى يصبح `APP_DEBUG=false` وتتم مراجعة secrets وconfig cache |
-| P0 | لا يوجد backup/restore مُنفّذ ومختبر على بنية خارجية | أضيف `scripts/backup_postgres.sh` وrunbook، لكن لا توجد storage أو schedule أو restore test فعلية داخل المستودع | ما زال خطر فقدان البيانات قائمًا حتى تنفيذ الاختبار |
+| P0 | لا يوجد backup/restore مُنفّذ ومختبر على بنية خارجية | أضيف أمر `backup:database` وسكربتات `sqlite` و`mysql` و`pgsql` وrunbook، لكن لا توجد storage أو schedule أو restore test فعلية داخل المستودع | ما زال خطر فقدان البيانات قائمًا حتى تنفيذ الاختبار |
 | P0 | لا توجد مراقبة وتنبيهات إنتاجية | توجد logs و`X-Correlation-Id` فقط، دون APM أو metrics أو alerting | لا يمكن اكتشاف فشل الدفع أو queue أو webhook في الوقت المناسب |
 | P0 | لا يوجد worker مُشغّل في بنية خارجية | أضيف `deploy/supervisor/ecommerce-worker.conf`، لكن لم يُثبت على host أو يُراقب بعد | الطلبات والأحداث المؤجلة قد تتراكم أو تتوقف بصمت |
 | P0 | لا يوجد scheduler مُفعّل في بنية خارجية | أضيف `deploy/ecommerce-scheduler.cron`، لكن لم يُثبت في crontab production بعد | abandoned carts وoutbox وreconciliation لن تعمل تلقائيًا دون cron خارجي |
