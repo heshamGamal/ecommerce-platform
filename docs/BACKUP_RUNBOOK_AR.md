@@ -70,7 +70,15 @@ php artisan backup:database --force
 php artisan backup:database --force --dry-run
 ```
 
-ينتج الأمر ملف `.dump` بصيغة PostgreSQL custom وملف `.sha256` مطابقًا له. يتم حذف الملفات الأقدم من مدة الاحتفاظ المحددة.
+ينتج الأمر ملفًا مناسبًا للمحرك (`.dump` لـ PostgreSQL، أو `.sql.gz` لـ MySQL، أو `.sqlite` لـ SQLite) وملف `.sha256` مطابقًا له. يتم حذف الملفات الأقدم من مدة الاحتفاظ المحددة.
+
+للتحقق من وجود نسخة حديثة وسلامة checksum:
+
+```bash
+php artisan backup:verify --max-age=48
+```
+
+يفشل الأمر إذا لم توجد نسخة، أو غاب checksum، أو فشل التحقق، أو تجاوز عمر أحدث نسخة الحد المحدد.
 
 ## الجدولة
 
@@ -85,6 +93,8 @@ php artisan backup:database --force --dry-run
 ```bash
 php artisan schedule:list
 ```
+
+ينبغي تشغيل `backup:verify` من نظام المراقبة أو cron مستقل، وإرسال تنبيه عند رمز خروج غير صفري.
 
 ## الاستعادة والاختبار
 

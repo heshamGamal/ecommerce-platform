@@ -1,0 +1,84 @@
+name: Database matrix
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: sqlite
+            connection: sqlite
+            database: database/database.sqlite
+          - name: mysql
+            connection: mysql
+            database: ecommerce_test
+            host: 127.0.0.1
+            port: 3306
+            username: root
+            password: root
+          - name: pgsql
+            connection: pgsql
+            database: ecommerce_test
+            host: 127.0.0.1
+            port: 5432
+            username: postgres
+            password: postgres
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: ecommerce_test
+          MYSQL_ROOT_PASSWORD: root
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ecommerce_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready -U postgres -d ecommerce_test"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, pdo_sqlite, pdo_mysql, pdo_pgsql
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env && php artisan key:generate
+      - name: Configure database
+        run: |
+          if [ "${{ matrix.connection }}" = "sqlite" ]; then
+            touch database/database.sqlite
+          fi
+          {
+            echo "DB_CONNECTION=${{ matrix.connection }}"
+            echo "DB_DATABASE=${{ matrix.database }}"
+            echo "DB_HOST=${{ matrix.host || '' }}"
+            echo "DB_PORT=${{ matrix.port || '' }}"
+            echo "DB_USERNAME=${{ matrix.username || '' }}"
+            echo "DB_PASSWORD=${{ matrix.password || '' }}"
+            echo "BACKUP_DIR=/tmp/ecommerce-backups"
+          } >> .env
+          mkdir -p /tmp/ecommerce-backups
+      - run: php artisan migrate --force
+      - run: php artisan db:seed --force
+      - run: php artisan backup:database --force --dry-run
+      - run: php artisan test --compact

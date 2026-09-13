@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             RbacSeeder::class,
             PaymentGatewaySettingsSeeder::class,
             CheckoutSettingsSeeder::class,
+            BackupSettingsSeeder::class,
         ]);
     }
 }
