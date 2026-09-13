@@ -44,4 +44,4 @@ php artisan backup:database --force
 
 ## Health expectations
 
-`/up` هو liveness check أساسي. يجب أن يضيف مشغل البنية التحتية readiness checks لـdatabase وcache وqueue قبل توجيه traffic، وأن يراقب `5xx` وqueue failures وpayment/webhook failures.
+`/up` هو liveness check أساسي، أما `/ready` فيفحص database وcache وstorage ويعيد `503` عند عدم الجاهزية. يجب أن يراقب مشغل البنية التحتية `/ready` قبل توجيه traffic، إضافة إلى `5xx` وqueue failures وpayment/webhook failures.

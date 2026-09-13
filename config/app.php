@@ -41,6 +41,8 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
+    'api_rate_limit' => (int) env('API_RATE_LIMIT_PER_MINUTE', 120),
+
     /*
     |--------------------------------------------------------------------------
     | Application URL
@@ -65,7 +67,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------

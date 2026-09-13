@@ -22,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('api', static fn (Request $request): Limit => Limit::perMinute(max(1, (int) config('app.api_rate_limit', 120)))
+            ->by((string) ($request->user()?->id ?? $request->ip())));
         RateLimiter::for('auth-register', static fn (Request $request): Limit => Limit::perMinute(3)->by($request->ip()));
         RateLimiter::for('password-change', static fn (Request $request): Limit => Limit::perMinute(5)->by((string) ($request->user()?->id ?? $request->ip())));
         RateLimiter::for('checkout', static fn (Request $request): Limit => Limit::perMinute(10)->by((string) ($request->user()?->id ?? $request->ip())));
